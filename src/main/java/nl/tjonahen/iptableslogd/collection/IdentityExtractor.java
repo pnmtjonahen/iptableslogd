@@ -1,5 +1,16 @@
 package nl.tjonahen.iptableslogd.collection;
 
+/**
+ * Identity extractor, used in the collections to get the identity (aka primairy key) of a collection element.
+ *
+ * @author Philippe Tjon - A - Hen, philippe@tjonahen.nl
+ * @param <T>
+ */
 public interface IdentityExtractor<T> {
-	String getIdentity(T t);
+    /**
+     * 
+     * @param type the collection element
+     * @return the identity
+     */
+    String getIdentity(T type);
 }

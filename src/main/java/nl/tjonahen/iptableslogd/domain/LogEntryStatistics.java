@@ -2,13 +2,11 @@ package nl.tjonahen.iptableslogd.domain;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import nl.tjonahen.iptableslogd.collection.CounterComparator;
 
 /**
  * LogEntry statistics, counts the number of ports, hosts and protocol.
