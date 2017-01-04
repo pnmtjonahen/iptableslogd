@@ -12,6 +12,7 @@ public final class CounterComparator implements Comparator<Counter>, Serializabl
      */
     private static final long serialVersionUID = 1L;
 
+    @Override
     public int compare(Counter o1, Counter o2) {
         return compareTo(o2, o1);
     }

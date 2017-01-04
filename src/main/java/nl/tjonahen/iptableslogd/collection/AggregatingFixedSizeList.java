@@ -16,8 +16,8 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
      *
      */
     private static final long serialVersionUID = -3749312424601064397L;
-    private Map<String, Integer> counter = new TreeMap<String, Integer>();
-    private IdentityExtractor<T> identityExtractor;
+    private final Map<String, Integer> counter = new TreeMap<>();
+    private final IdentityExtractor<T> identityExtractor;
 
     public AggregatingFixedSizeList(int size, IdentityExtractor<T> identityExtractor) {
         super(size);
@@ -29,7 +29,7 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
     public synchronized boolean add(T entry) {
         if (counter.containsKey(identityExtractor.getIdentity(entry))) {
             int count = counter.remove(identityExtractor.getIdentity(entry));
-            counter.put(identityExtractor.getIdentity(entry), Integer.valueOf(++count));
+            counter.put(identityExtractor.getIdentity(entry), ++count);
         } else {
             super.add(entry);
             counter.put(identityExtractor.getIdentity(entry), 1);

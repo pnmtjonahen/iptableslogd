@@ -26,23 +26,18 @@ public final class LogEntryCollector {
         return instance;
     }
 
-    private List<LogEntry> all = Collections
-            .synchronizedList(new FixedSizeList<LogEntry>(10));
-    private List<LogEntry> portScans = Collections
-            .synchronizedList(new AggregatingFixedSizeList<LogEntry>(5,
-                            new SourceExtractor<LogEntry>()));
+    private final List<LogEntry> all = Collections.synchronizedList(new FixedSizeList<>(10));
+    private final List<LogEntry> portScans = Collections.synchronizedList(new AggregatingFixedSizeList<>(5, new SourceExtractor<>()));
     /**
      * helper list to aggregate ip adresses (source) Synchronisation is done on the portScans list (piggybacking)
      */
-    private AggregatingFixedSizeList<LogEntry> portScanSlots = new AggregatingFixedSizeList<LogEntry>(
-            5, new SourceExtractor<LogEntry>());
+    private final AggregatingFixedSizeList<LogEntry> portScanSlots = new AggregatingFixedSizeList<>(5, new SourceExtractor<>());
 
-    private List<LogEntry> error = new AggregatingFixedSizeList<LogEntry>(10,
-            new DestinationAndPortExtractor<LogEntry>());
+    private final List<LogEntry> error = new AggregatingFixedSizeList<>(10, new DestinationAndPortExtractor<>());
 
-    private LogEntryStatistics ipTablesStatistics = new LogEntryStatistics();
+    private final LogEntryStatistics ipTablesStatistics = new LogEntryStatistics();
 
-    private long now;
+    private final long now;
     private static final long DAY = 24 * 60 * 60 * 1000L;
     private static final long PORTSCANTIMESLOT = 5 * 1000L;
 
@@ -127,8 +122,7 @@ public final class LogEntryCollector {
     }
 
     public int getAggregateErrorCount(LogEntry line) {
-        return ((AggregatingFixedSizeList<LogEntry>) error)
-                .getAggregateCount(line);
+        return ((AggregatingFixedSizeList<LogEntry>) error).getAggregateCount(line);
     }
 
 }

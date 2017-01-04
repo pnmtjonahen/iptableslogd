@@ -34,8 +34,8 @@ public class LogEntry {
     private final Date date;
     private final SimpleDateFormat fmt = new SimpleDateFormat("yyyy MMM dd HH:mm:ss");
 
-    private static int year = Calendar.getInstance().get(Calendar.YEAR);
-    private static Logger logger = Logger.getLogger(LogEntry.class.getName());
+    private static final int YEAR = Calendar.getInstance().get(Calendar.YEAR);
+    private static final Logger LOGGER = Logger.getLogger(LogEntry.class.getName());
 
     public LogEntry(String line) throws ParseException {
 //Oct 23 09:25:49 nx9420 kernel: IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:00:14:22:f2:f9:c2:08:00 SRC=192.168.0.105 DST=192.168.0.255 LEN=78 TOS=0x00 PREC=0x00 
@@ -43,21 +43,21 @@ public class LogEntry {
 //Jun 18 16:10:09 eb8740w  IN=wlan0 OUT= MAC=01:00:5e:00:00:fb:dc:86:d8:21:50:94:08:00 SRC=145.89.78.8 DST=224.0.0.251 LEN=248 TOS=00 PREC=0x00 
 //              TTL=255 ID=33635 PROTO=UDP SPT=5353 DPT=5353 LEN=228 MARK=0 
         dateTime = line.substring(0, 15);
-        logger.log(Level.INFO, "Current date :" + "" + year + " " + dateTime);
-        date = fmt.parse("" + year + " " + dateTime);
+        LOGGER.log(Level.FINE, "Current date :{0} {1}", new Object[]{YEAR, dateTime});
+        date = fmt.parse("" + YEAR + " " + dateTime);
         String[] elements = line.split(" ");
 
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i].startsWith("IN")) {
-                inInterface = elements[i].substring(3);
-            } else if (elements[i].startsWith("OUT")) {
-                outInterface = elements[i].substring(4);
-            } else if (elements[i].startsWith("MAC")) {
-                macAdress = elements[i].substring(4);
-            } else if (elements[i].startsWith("SRC")) {
-                source = elements[i].substring(4);
-            } else if (elements[i].startsWith("DST")) {
-                destination = elements[i].substring(4);
+        for (String element : elements) {
+            if (element.startsWith("IN")) {
+                inInterface = element.substring(3);
+            } else if (element.startsWith("OUT")) {
+                outInterface = element.substring(4);
+            } else if (element.startsWith("MAC")) {
+                macAdress = element.substring(4);
+            } else if (element.startsWith("SRC")) {
+                source = element.substring(4);
+            } else if (element.startsWith("DST")) {
+                destination = element.substring(4);
 //			} else if (elements[i].startsWith("LEN")) {
 //				if (len1 == null)
 //					len1 = elements[i].substring(4);
@@ -69,17 +69,17 @@ public class LogEntry {
 //				prec = elements[i].substring(5);
 //			} else if (elements[i].startsWith("TTL")) {
 //				ttl = elements[i].substring(4);
-            } else if (elements[i].startsWith("ID")) {
-                id = elements[i].substring(3);
-            } else if (elements[i].startsWith("PROTO")) {
-                protocol = elements[i].substring(6);
+            } else if (element.startsWith("ID")) {
+                id = element.substring(3);
+            } else if (element.startsWith("PROTO")) {
+                protocol = element.substring(6);
                 if ("2".equals(protocol)) {
                     protocol = "IGMP"; // Internet Group Management Protocol 
                 }
-            } else if (elements[i].startsWith("SPT")) {
-                sourcePort = elements[i].substring(4);
-            } else if (elements[i].startsWith("DPT")) {
-                destinationPort = elements[i].substring(4);
+            } else if (element.startsWith("SPT")) {
+                sourcePort = element.substring(4);
+            } else if (element.startsWith("DPT")) {
+                destinationPort = element.substring(4);
             }
         }
     }

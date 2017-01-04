@@ -9,7 +9,7 @@ public final class HttpServerConfiguration implements HttpServerConfigurationMBe
     private int poolSize;
     private boolean useReverseLookup = false;
     private String context;
-    private HttpServer httpServer;
+    private final HttpServer httpServer;
 
     public HttpServerConfiguration(final HttpServer httpServer, final int poolSize, final String context) {
         this.httpServer = httpServer;

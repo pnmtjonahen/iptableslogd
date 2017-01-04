@@ -31,7 +31,7 @@ public final class PortNumbers {
     }
 
     // read known portnumbers from properties file.
-    private Properties properties = new Properties();
+    private final Properties properties = new Properties();
 
     private PortNumbers() throws IOException {
         properties.load(this.getClass().getResourceAsStream(
@@ -54,14 +54,14 @@ public final class PortNumbers {
     }
 
     // these portnumbers can be ignored.
-    private static Set<String> ignorable = new TreeSet<String>();
+    private static final Set<String> IGNORABLE_SET = new TreeSet<String>();
 
     static {
-        ignorable.add("67");
-        ignorable.add("68");
-        ignorable.add("137");
-        ignorable.add("138");
-        ignorable.add("139");
+        IGNORABLE_SET.add("67");
+        IGNORABLE_SET.add("68");
+        IGNORABLE_SET.add("137");
+        IGNORABLE_SET.add("138");
+        IGNORABLE_SET.add("139");
     }
 
     /**
@@ -74,33 +74,30 @@ public final class PortNumbers {
         if (port == null) {
             return false;
         }
-        if (ignorable.contains(port)) {
-            return true;
-        }
-        return false;
+        return IGNORABLE_SET.contains(port);
     }
 
     // these portnumbers are known attack ports
-    private static Set<String> attack = new TreeSet<String>();
+    private static final Set<String> ATTACK_SET = new TreeSet<String>();
 
     static {
-        attack.add("21"); // FTP
-        attack.add("23"); // TELNET
-        attack.add("25"); // SMTP
-        attack.add("80"); // HTTP
-        attack.add("110"); // POP3
-        attack.add("135");
-        attack.add("139"); // Scan for NETBIOS suspectability (port 139)
-        attack.add("445"); // Scan for Windows file sharing suspectability (port
+        ATTACK_SET.add("21"); // FTP
+        ATTACK_SET.add("23"); // TELNET
+        ATTACK_SET.add("25"); // SMTP
+        ATTACK_SET.add("80"); // HTTP
+        ATTACK_SET.add("110"); // POP3
+        ATTACK_SET.add("135");
+        ATTACK_SET.add("139"); // Scan for NETBIOS suspectability (port 139)
+        ATTACK_SET.add("445"); // Scan for Windows file sharing suspectability (port
         // 445)
-        attack.add("8080"); // Scan for firewall remote login (port 8080)
-        attack.add("3389"); // Microsoft Remote Desktop vulnerable (port 3389)
-        attack.add("5900"); // VNC Remote Desktop vulnerable (port 5900)
-        attack.add("1723"); // VPN (PPTP) service open/vulnerable (port 1723)
-        attack.add("1433"); // Microsoft SQL Server open/vulnerable (port 1433)
-        attack.add("1521"); // Oracle database service open/vulnerable (port
+        ATTACK_SET.add("8080"); // Scan for firewall remote login (port 8080)
+        ATTACK_SET.add("3389"); // Microsoft Remote Desktop vulnerable (port 3389)
+        ATTACK_SET.add("5900"); // VNC Remote Desktop vulnerable (port 5900)
+        ATTACK_SET.add("1723"); // VPN (PPTP) service open/vulnerable (port 1723)
+        ATTACK_SET.add("1433"); // Microsoft SQL Server open/vulnerable (port 1433)
+        ATTACK_SET.add("1521"); // Oracle database service open/vulnerable (port
         // 1521)
-        attack.add("3306"); // MySQL database open/vulnerable (port 3306)
+        ATTACK_SET.add("3306"); // MySQL database open/vulnerable (port 3306)
 
     }
 
@@ -114,10 +111,7 @@ public final class PortNumbers {
         if (port == null) {
             return false;
         }
-        if (attack.contains(port)) {
-            return true;
-        }
-        return false;
+        return ATTACK_SET.contains(port);
     }
 
 }

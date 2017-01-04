@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +31,7 @@ public final class HttpRequestHandler implements Runnable {
     private final OutputStream output;
     private final BufferedReader br;
     private final HttpServerConfiguration config;
-    private final Logger logger = Logger.getLogger(HttpRequestHandler.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
     // Constructor
     public HttpRequestHandler(final HttpServerConfiguration config, final Socket socket)
@@ -48,15 +49,13 @@ public final class HttpRequestHandler implements Runnable {
         try {
             processRequest();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, e.getMessage());
+            LOGGER.log(Level.SEVERE, e.getMessage());
         }
     }
 
     private void processRequest() {
         try {
-            if (logger.isLoggable(Level.INFO)) {
-                logger.log(Level.INFO, "Building result page.");
-            }
+            LOGGER.log(Level.FINE, "Building result page.");
             final StringBuilder entityBody = new StringBuilder("");
             entityBody.append("<HTML><HEAD><TITLE>IPTables LogD</TITLE>")
                     .append(addMetaData())
@@ -92,8 +91,8 @@ public final class HttpRequestHandler implements Runnable {
                 output.close();
                 br.close();
                 socket.close();
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, e.getMessage());
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, e.getMessage());
             }
         }
     }
@@ -155,12 +154,16 @@ public final class HttpRequestHandler implements Runnable {
         final StringBuilder data = new StringBuilder("");
         data.append("<h3>").append(name).append("</h3>");
         data.append("<table width='100%'>");
-        for (Counter es : lst) {
+        lst.stream().map((es) -> {
             data.append("<tr>");
             data.append("<td width='90%'>" + es.getData() + "</td>");
+            return es;
+        }).map((es) -> {
             data.append("<td width='10%'>" + es.getCount() + "</td>");
+            return es;
+        }).forEachOrdered((_item) -> {
             data.append("</tr>");
-        }
+        });
         data.append("</table>");
         return data.toString();
     }
@@ -171,9 +174,9 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td><td>proto</td><td width='100%'>port</td></tr>");
         List<LogEntry> lines = LogEntryCollector.instance().getErrorLogLines();
-        for (LogEntry line : lines) {
+        lines.forEach((line) -> {
             data.append(addLogEntry(line, 0));
-        }
+        });
         data.append("</table>");
         return data.toString();
     }
@@ -184,25 +187,29 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td></tr>");
         List<LogEntry> lines = Collections.synchronizedList(LogEntryCollector.instance().getPortScans());
-        for (LogEntry line : lines) {
-            if (line != null) {
-                data.append("<tr>");
-                data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
-                data.append("<td>");
-                if (config.getUseReverseLookup()) {
-                    try {
-                        InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
-                        data.append(cacheInetAddress.getHostName());
-                    } catch (UnknownHostException e) {
-                        data.append(line.getSource());
-                    }
-                } else {
+        lines.stream().filter((line) -> (line != null)).map((line) -> {
+            data.append("<tr>");
+            data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
+            return line;
+        }).map((line) -> {
+            data.append("<td>");
+            if (config.getUseReverseLookup()) {
+                try {
+                    InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
+                    data.append(cacheInetAddress.getHostName());
+                } catch (UnknownHostException e) {
                     data.append(line.getSource());
                 }
-                data.append("</td>");
-                data.append("</tr>");
+            } else {
+                data.append(line.getSource());
             }
-        }
+            return line;
+        }).map((_item) -> {
+            data.append("</td>");
+            return _item;
+        }).forEachOrdered((_item) -> {
+            data.append("</tr>");
+        });
         data.append("</table>");
         return data.toString();
     }

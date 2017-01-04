@@ -14,41 +14,34 @@ import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 public final class IPTablesLogHandler implements Runnable {
 
     private String ulog = "";
-    private Logger logger = Logger.getLogger(IPTablesLogHandler.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
     public IPTablesLogHandler(String ulog) {
         this.ulog = ulog;
     }
 
+    @Override
     public void run() {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "Start reading log " + ulog);
-        }
+        LOGGER.log(Level.FINE, "Start reading log {0}", ulog);
         BufferedReader bf;
         try {
             bf = new BufferedReader(new InputStreamReader(
                     new FileInputStream(ulog)));
         } catch (FileNotFoundException e1) {
-            logger.log(Level.SEVERE, e1.getMessage());
+            LOGGER.log(Level.SEVERE, e1.getMessage());
             return;
         }
         while (true) {
             try {
                 String line = bf.readLine();
                 if (line != null) {
-                    if (logger.isLoggable(Level.INFO)) {
-                        logger.log(Level.INFO, "input:" + line);
-                    }
+                    LOGGER.log(Level.FINE, "input:{0}", line);
                     LogEntryCollector.instance().addLogLine(line);
                 } else {
                     Thread.sleep(10);
                 }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, e.getMessage());
-            } catch (InterruptedException e) {
-                logger.log(Level.SEVERE, e.getMessage());
-            } catch (ParseException e) {
-                logger.log(Level.SEVERE, e.getMessage());
+            } catch (IOException | InterruptedException | ParseException e) {
+                LOGGER.log(Level.SEVERE, e.getMessage());
             }
         }
 

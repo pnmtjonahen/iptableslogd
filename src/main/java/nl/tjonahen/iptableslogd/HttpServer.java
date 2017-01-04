@@ -26,7 +26,7 @@ public final class HttpServer {
     public static void main(String args[]) {
         int port = 4000;
         int poolSize = 5;
-        String ulog = "/var/log/ulogd_syslogemu.log";
+        String ulog = "/var/log/ulogd.syslogemu";
         String context = "/";
         // Parse commandline params
         for (int i = 0; i < args.length; i++) {
@@ -64,15 +64,7 @@ public final class HttpServer {
         try {
             // Start the server.
             new HttpServer().server(port, poolSize, context);
-        } catch (MalformedObjectNameException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-        } catch (InstanceAlreadyExistsException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-        } catch (MBeanRegistrationException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-        } catch (NotCompliantMBeanException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-        } catch (IOException e) {
+        } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | IOException e) {
             logger.log(Level.SEVERE, e.getMessage());
         }
         logger.log(Level.INFO, "iptableslogd exit.");
@@ -82,7 +74,7 @@ public final class HttpServer {
      * The thread pool instance.
      */
     private ExecutorService pool;
-    private final Logger logger = Logger.getLogger(HttpServer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HttpServer.class.getName());
 
     private void server(int port, int poolSize, String context) throws MalformedObjectNameException, InstanceAlreadyExistsException,
             MBeanRegistrationException, NotCompliantMBeanException, IOException {
@@ -95,13 +87,13 @@ public final class HttpServer {
 
         // print out the port number for user
         serverSocket = new ServerSocket(port);
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "httpServer running on port " + serverSocket.getLocalPort() + " with context " + context);
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "httpServer running on port {0} with context {1}", new Object[]{serverSocket.getLocalPort(), context});
         }
         setupPool(config);
 
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "httpServer up and running...");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "httpServer up and running...");
         }
         // server infinite loop
         while (config.canContinue()) {
@@ -109,8 +101,8 @@ public final class HttpServer {
                 serverSocket.setSoTimeout(10);
 
                 Socket socket = serverSocket.accept();
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.log(Level.INFO, "New connection accepted " + socket.getInetAddress() + ":" + socket.getPort());
+                if (LOGGER.isLoggable(Level.INFO)) {
+                    LOGGER.log(Level.INFO, "New connection accepted {0}:{1}", new Object[]{socket.getInetAddress(), socket.getPort()});
                 }
 
 				// Construct handler to process the HTTP request message.
@@ -119,7 +111,7 @@ public final class HttpServer {
             } catch (SocketTimeoutException e) {
                 // ignore time outs
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "fire worker thread:" + e.getMessage());
+                LOGGER.log(Level.SEVERE, "fire worker thread:{0}", e.getMessage());
             }
         }
         shutdownAndAwaitTermination(pool);
@@ -130,15 +122,15 @@ public final class HttpServer {
         if (pool != null) {
             shutdownAndAwaitTermination(pool);
         }
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "httpServer setup thread pool.");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "httpServer setup thread pool.");
         }
         pool = Executors.newFixedThreadPool(config.getPoolSize());
     }
 
     private void shutdownAndAwaitTermination(ExecutorService pool) {
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "Shutdown thread pool.");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "Shutdown thread pool.");
         }
         pool.shutdown(); // Disable new tasks from being submitted
         try {
@@ -147,7 +139,7 @@ public final class HttpServer {
                 pool.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
                 if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
-                    logger.log(Level.SEVERE, "Pool did not terminate");
+                    LOGGER.log(Level.SEVERE, "Pool did not terminate");
                 }
             }
         } catch (InterruptedException ie) {
@@ -161,8 +153,8 @@ public final class HttpServer {
     private void setupJmx(HttpServerConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
             MBeanRegistrationException, NotCompliantMBeanException {
 
-        if (logger.isLoggable(Level.INFO)) {
-            logger.log(Level.INFO, "httpServer setup jmx.");
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, "httpServer setup jmx.");
         }
 
         // Get the Platform MBean Server
