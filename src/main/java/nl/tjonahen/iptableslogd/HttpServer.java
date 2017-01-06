@@ -87,25 +87,19 @@ public final class HttpServer {
 
         // print out the port number for user
         serverSocket = new ServerSocket(port);
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "httpServer running on port {0} with context {1}", new Object[]{serverSocket.getLocalPort(), context});
-        }
+        LOGGER.log(Level.INFO, "httpServer running on port {0} with context {1}", new Object[]{serverSocket.getLocalPort(), context});
         setupPool(config);
 
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "httpServer up and running...");
-        }
+        LOGGER.log(Level.INFO, "httpServer up and running...");
         // server infinite loop
         while (config.canContinue()) {
             try {
                 serverSocket.setSoTimeout(10);
 
                 Socket socket = serverSocket.accept();
-                if (LOGGER.isLoggable(Level.INFO)) {
-                    LOGGER.log(Level.INFO, "New connection accepted {0}:{1}", new Object[]{socket.getInetAddress(), socket.getPort()});
-                }
+                LOGGER.log(Level.FINE, "New connection accepted {0}:{1}", new Object[]{socket.getInetAddress(), socket.getPort()});
 
-				// Construct handler to process the HTTP request message.
+                // Construct handler to process the HTTP request message.
                 // Create a new thread to process the request.
                 pool.execute(new HttpRequestHandler(config, socket));
             } catch (SocketTimeoutException e) {
@@ -122,16 +116,12 @@ public final class HttpServer {
         if (pool != null) {
             shutdownAndAwaitTermination(pool);
         }
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "httpServer setup thread pool.");
-        }
+        LOGGER.log(Level.INFO, "httpServer setup thread pool.");
         pool = Executors.newFixedThreadPool(config.getPoolSize());
     }
 
     private void shutdownAndAwaitTermination(ExecutorService pool) {
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "Shutdown thread pool.");
-        }
+        LOGGER.log(Level.INFO, "Shutdown thread pool.");
         pool.shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
@@ -153,9 +143,7 @@ public final class HttpServer {
     private void setupJmx(HttpServerConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
             MBeanRegistrationException, NotCompliantMBeanException {
 
-        if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "httpServer setup jmx.");
-        }
+        LOGGER.log(Level.INFO, "httpServer setup jmx.");
 
         // Get the Platform MBean Server
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();

@@ -2,7 +2,6 @@ package nl.tjonahen.iptableslogd.input;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
@@ -23,14 +22,23 @@ public final class IPTablesLogHandler implements Runnable {
     @Override
     public void run() {
         LOGGER.log(Level.FINE, "Start reading log {0}", ulog);
-        BufferedReader bf;
-        try {
-            bf = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(ulog)));
-        } catch (FileNotFoundException e1) {
-            LOGGER.log(Level.SEVERE, e1.getMessage());
-            return;
+        while (true) {
+            try (final BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(ulog)))) {
+                processFile(bf);
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE,"IOException {0}, sleep and retry...", new Object[]{e.getMessage()});
+                try {
+                    // wait a full second before retry 
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, e.getMessage());
+                }
+            }
         }
+
+    }
+
+    private void processFile(final BufferedReader bf) throws IOException {
         while (true) {
             try {
                 String line = bf.readLine();
@@ -40,11 +48,10 @@ public final class IPTablesLogHandler implements Runnable {
                 } else {
                     Thread.sleep(10);
                 }
-            } catch (IOException | InterruptedException | ParseException e) {
+            } catch (InterruptedException | ParseException e) {
                 LOGGER.log(Level.SEVERE, e.getMessage());
             }
         }
-
     }
 
 }
