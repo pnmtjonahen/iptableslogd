@@ -4,7 +4,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -16,18 +15,18 @@ import java.util.logging.Logger;
 public class LogEntry {
 
     private final String dateTime;
-    private String inInterface;
-    private String outInterface;
-    private String macAdress;
-    private String source;
-    private String destination;
+    private String inInterface = "";
+    private String outInterface  = "";
+    private String macAdress = "";
+    private String source = "";
+    private String destination = "";
 //	private String len1;
 //	private String tos;
 //	private String prec;
 //	private String ttl;
-    private String id;
-    private String protocol;
-    private String sourcePort;
+    private String id = "";
+    private String protocol = "";
+    private String sourcePort = "";
     private String destinationPort = "";
 //	private String len2;
 
@@ -43,7 +42,7 @@ public class LogEntry {
 //Jun 18 16:10:09 eb8740w  IN=wlan0 OUT= MAC=01:00:5e:00:00:fb:dc:86:d8:21:50:94:08:00 SRC=145.89.78.8 DST=224.0.0.251 LEN=248 TOS=00 PREC=0x00 
 //              TTL=255 ID=33635 PROTO=UDP SPT=5353 DPT=5353 LEN=228 MARK=0 
         dateTime = line.substring(0, 15);
-        LOGGER.log(Level.FINE, "Current date :{0} {1}", new Object[]{YEAR, dateTime});
+        LOGGER.fine(() -> String.format("Current date :%d %s", YEAR, dateTime));
         date = fmt.parse("" + YEAR + " " + dateTime);
         String[] elements = line.split(" ");
 

@@ -7,7 +7,7 @@ package nl.tjonahen.iptableslogd;
 public final class HttpServerConfiguration implements HttpServerConfigurationMBean {
 
     private int poolSize;
-    private boolean useReverseLookup = false;
+    private boolean useReverseLookup = true;
     private String context;
     private final HttpServer httpServer;
 
@@ -17,17 +17,20 @@ public final class HttpServerConfiguration implements HttpServerConfigurationMBe
         this.context = context;
     }
 
+    @Override
     public void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
         httpServer.setupPool(this);
     }
 
+    @Override
     public int getPoolSize() {
         return poolSize;
     }
 
     private boolean shutdown = false;
 
+    @Override
     public void shutdown() {
         shutdown = true;
     }
@@ -36,18 +39,22 @@ public final class HttpServerConfiguration implements HttpServerConfigurationMBe
         return !shutdown;
     }
 
+    @Override
     public boolean getUseReverseLookup() {
         return useReverseLookup;
     }
 
+    @Override
     public void setUseReverseLookup(boolean b) {
         useReverseLookup = b;
     }
 
+    @Override
     public String getContext() {
         return context;
     }
 
+    @Override
     public void setContext(String context) {
         this.context = context;
     }

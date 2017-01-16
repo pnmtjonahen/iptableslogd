@@ -8,9 +8,11 @@ import nl.tjonahen.iptableslogd.collection.AggregatingFixedSizeList;
 import nl.tjonahen.iptableslogd.collection.FixedSizeList;
 
 /**
- * LogEntry collector. Collects logentry objects aggragates them calculates statistics etc.
+ * LogEntry collector. Collects logentry objects aggragates them calculates
+ * statistics etc.
  *
- * This is a shared object. It is shared between the IPTablesLogHandler and HttpRequestHandler threads.
+ * This is a shared object. It is shared between the IPTablesLogHandler and
+ * HttpRequestHandler threads.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -27,13 +29,14 @@ public final class LogEntryCollector {
     }
 
     private final List<LogEntry> all = Collections.synchronizedList(new FixedSizeList<>(10));
-    private final List<LogEntry> portScans = Collections.synchronizedList(new AggregatingFixedSizeList<>(5, new SourceExtractor<>()));
+    private final List<LogEntry> portScans = Collections.synchronizedList(new AggregatingFixedSizeList<>(5, (t) -> t.getSource()));
     /**
-     * helper list to aggregate ip adresses (source) Synchronisation is done on the portScans list (piggybacking)
+     * helper list to aggregate ip adresses (source) Synchronisation is done on
+     * the portScans list (piggybacking)
      */
-    private final AggregatingFixedSizeList<LogEntry> portScanSlots = new AggregatingFixedSizeList<>(5, new SourceExtractor<>());
+    private final AggregatingFixedSizeList<LogEntry> portScanSlots = new AggregatingFixedSizeList<>(5, (t) -> t.getSource());
 
-    private final List<LogEntry> error = new AggregatingFixedSizeList<>(10, new DestinationAndPortExtractor<>());
+    private final AggregatingFixedSizeList<LogEntry> error = new AggregatingFixedSizeList<>(10, (t) -> t.getDestination() + t.getDestinationPort());
 
     private final LogEntryStatistics ipTablesStatistics = new LogEntryStatistics();
 
@@ -55,11 +58,13 @@ public final class LogEntryCollector {
         LogEntry lastEntry = new LogEntry(logLine);
         if (lastEntry.getDate().getTime() > (now - DAY)
                 && !detectPortScan(lastEntry)) {
-			// if a port scan was detected do not bother with statistics and
+            // if a port scan was detected do not bother with statistics and
             // reporting
             // of individual dropped packages
-            addToAllList(lastEntry);
-            addToErrorList(lastEntry);
+            if (!isFromDocker(lastEntry)) {
+                addToAllList(lastEntry);
+                addToErrorList(lastEntry);
+            }
             updateStatistics(lastEntry);
 
         }
@@ -103,6 +108,7 @@ public final class LogEntryCollector {
         ipTablesStatistics.addHost(entry.getSource());
         ipTablesStatistics.addProtocol(entry.getProtocol());
         ipTablesStatistics.addPort(entry.portDestinationName());
+        ipTablesStatistics.addInInterface(entry.getInInterface());
     }
 
     public LogEntryStatistics getIpTablesStatistics() {
@@ -121,8 +127,13 @@ public final class LogEntryCollector {
         return portScans;
     }
 
-    public int getAggregateErrorCount(LogEntry line) {
-        return ((AggregatingFixedSizeList<LogEntry>) error).getAggregateCount(line);
+    public int getAggregateErrorCount(final LogEntry line) {
+        return error.getAggregateCount(line);
     }
+
+    private boolean isFromDocker(final LogEntry lastEntry) {
+        return lastEntry.getInInterface().startsWith("docker");
+    }
+
 
 }

@@ -5,7 +5,6 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -24,7 +23,7 @@ public final class PortNumbers {
             try {
                 instance = new PortNumbers();
             } catch (IOException e) {
-                Logger.getLogger(PortNumbers.class.getName()).log(Level.SEVERE, "Error loading PortNumbers ", e);
+                Logger.getLogger(PortNumbers.class.getName()).severe(() -> "Error loading PortNumbers " + e);
             }
         }
         return instance;
@@ -88,15 +87,13 @@ public final class PortNumbers {
         ATTACK_SET.add("110"); // POP3
         ATTACK_SET.add("135");
         ATTACK_SET.add("139"); // Scan for NETBIOS suspectability (port 139)
-        ATTACK_SET.add("445"); // Scan for Windows file sharing suspectability (port
-        // 445)
+        ATTACK_SET.add("445"); // Scan for Windows file sharing suspectability (port 445)
         ATTACK_SET.add("8080"); // Scan for firewall remote login (port 8080)
         ATTACK_SET.add("3389"); // Microsoft Remote Desktop vulnerable (port 3389)
         ATTACK_SET.add("5900"); // VNC Remote Desktop vulnerable (port 5900)
         ATTACK_SET.add("1723"); // VPN (PPTP) service open/vulnerable (port 1723)
         ATTACK_SET.add("1433"); // Microsoft SQL Server open/vulnerable (port 1433)
-        ATTACK_SET.add("1521"); // Oracle database service open/vulnerable (port
-        // 1521)
+        ATTACK_SET.add("1521"); // Oracle database service open/vulnerable (port 1521)
         ATTACK_SET.add("3306"); // MySQL database open/vulnerable (port 3306)
 
     }

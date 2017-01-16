@@ -9,9 +9,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
+
 import java.util.logging.Logger;
 
 import nl.tjonahen.iptableslogd.HttpServerConfiguration;
@@ -50,13 +50,13 @@ public final class HttpRequestHandler implements Runnable {
         try {
             processRequest();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error in request handler ", e);
         }
     }
 
     private void processRequest() {
         try {
-            LOGGER.log(Level.FINE, "Building result page.");
+            LOGGER.fine("Building result page.");
             final StringBuilder entityBody = new StringBuilder("");
             entityBody.append("<HTML><HEAD><TITLE>IPTables LogD</TITLE>")
                     .append(addMetaData())
@@ -93,7 +93,7 @@ public final class HttpRequestHandler implements Runnable {
                 br.close();
                 socket.close();
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error close response ", e);
             }
         }
     }
@@ -123,6 +123,7 @@ public final class HttpRequestHandler implements Runnable {
     private String buildStatistics() {
         final StringBuilder data = new StringBuilder("");
         data.append(buildGlobalStatistics());
+        data.append(buildStatisticsTable("IN statistics:", LogEntryCollector.instance().getIpTablesStatistics().getInInterfaces()));
         data.append(buildStatisticsTable("Protocol statistics:", LogEntryCollector.instance().getIpTablesStatistics().getProtocol()));
         data.append(buildStatisticsTable("Port statistics:", LogEntryCollector.instance().getIpTablesStatistics().getPorts()));
         data.append(buildStatisticsTable("Host statistics:", LogEntryCollector.instance().getIpTablesStatistics().getHosts()));
@@ -135,17 +136,17 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='20%'>First</td>");
-        data.append("<td width='80%'>" + new Date(LogEntryCollector.instance().getIpTablesStatistics().getStart()) + "</td>");
+        data.append("<td width='80%'>").append(new Date(LogEntryCollector.instance().getIpTablesStatistics().getStart())).append("</td>");
         data.append("</tr>");
         data.append("<tr>");
         data.append("<td width='20%'>Last</td>");
-        data.append("<td width='80%'>" + new Date(LogEntryCollector.instance().getIpTablesStatistics().getEnd()) + "</td>");
+        data.append("<td width='80%'>").append(new Date(LogEntryCollector.instance().getIpTablesStatistics().getEnd())).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='80%'>Count</td>");
-        data.append("<td width='20%'>" + LogEntryCollector.instance().getIpTablesStatistics().getNumber() + "</td>");
+        data.append("<td width='20%'>").append(LogEntryCollector.instance().getIpTablesStatistics().getNumber()).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         return data.toString();
@@ -157,10 +158,10 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         lst.stream().map((es) -> {
             data.append("<tr>");
-            data.append("<td width='90%'>" + es.getData() + "</td>");
+            data.append("<td width='90%'>").append(es.getData()).append("</td>");
             return es;
         }).map((es) -> {
-            data.append("<td width='10%'>" + es.getCount() + "</td>");
+            data.append("<td width='10%'>").append(es.getCount()).append("</td>");
             return es;
         }).forEachOrdered((_item) -> {
             data.append("</tr>");
@@ -187,30 +188,33 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<h3>Possible portscan sources</h3>");
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td></tr>");
-        List<LogEntry> lines = Collections.synchronizedList(LogEntryCollector.instance().getPortScans());
-        lines.stream().filter((line) -> (line != null)).map((line) -> {
-            data.append("<tr>");
-            data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
-            return line;
-        }).map((line) -> {
-            data.append("<td>");
-            if (config.getUseReverseLookup()) {
-                try {
-                    InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
-                    data.append(cacheInetAddress.getHostName());
-                } catch (UnknownHostException e) {
-                    data.append(line.getSource());
-                }
-            } else {
-                data.append(line.getSource());
-            }
-            return line;
-        }).map((_item) -> {
-            data.append("</td>");
-            return _item;
-        }).forEachOrdered((_item) -> {
-            data.append("</tr>");
-        });
+        Collections.synchronizedList(LogEntryCollector.instance().getPortScans())
+                .stream()
+                .filter((line) -> (line != null))
+                .map((line) -> {
+                    data.append("<tr>");
+                    data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
+                    return line;
+                })
+                .map((line) -> {
+                    data.append("<td>");
+                    if (config.getUseReverseLookup()) {
+                        try {
+                            final InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
+                            data.append(cacheInetAddress.getHostName());
+                        } catch (UnknownHostException e) {
+                            data.append(line.getSource());
+                        }
+                    } else {
+                        data.append(line.getSource());
+                    }
+                    data.append("</td>");
+                    return line;
+                })
+                .map((line) -> {
+                    data.append("</tr>");
+                    return line;
+                });
         data.append("</table>");
         return data.toString();
     }
@@ -221,9 +225,9 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td><td>proto</td><td width='100%'>port</td></tr>");
         List<LogEntry> lines = LogEntryCollector.instance().getAllLogLines();
-        for (LogEntry line : lines) {
+        lines.forEach((line) -> {
             data.append(addLogEntry(line, -1));
-        }
+        });
         data.append("</table>");
         return data.toString();
     }

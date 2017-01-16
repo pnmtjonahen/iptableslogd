@@ -6,6 +6,7 @@ package nl.tjonahen.iptableslogd.collection;
  * @author Philippe Tjon - A - Hen, philippe@tjonahen.nl
  * @param <T>
  */
+@FunctionalInterface
 public interface IdentityExtractor<T> {
     /**
      * 

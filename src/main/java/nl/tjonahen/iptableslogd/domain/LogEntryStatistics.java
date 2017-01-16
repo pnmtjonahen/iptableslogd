@@ -56,6 +56,7 @@ public final class LogEntryStatistics {
     private final Map<String, Counter> hosts = new TreeMap<>();
     private final Map<String, Counter> protocol = new TreeMap<>();
     private final Map<String, Counter> ports = new TreeMap<>();
+    private final Map<String, Counter> inInterfaces = new TreeMap<>();
 
     private List<Counter> getMapAsSortedList(Map<String, Counter> map) {
         List<Counter> lst = new ArrayList<>();
@@ -94,6 +95,14 @@ public final class LogEntryStatistics {
      */
     public synchronized List<Counter> getPorts() {
         return getMapAsSortedList(ports);
+    }
+    /**
+     * Get the inInterface counter list. The list is ordered by number of occurrences.
+     *
+     * @return
+     */
+    public synchronized List<Counter> getInInterfaces() {
+        return getMapAsSortedList(inInterfaces);
     }
 
     public synchronized long getStart() {
@@ -151,6 +160,22 @@ public final class LogEntryStatistics {
             ports.put(port, new Counter(port));
         }
         sizeMap(ports);
+    }
+    /**
+     * Add a inInterface to the inInterface counter.
+     *
+     * @param inInterface
+     */
+    public synchronized void addInInterface(String inInterface) {
+        if (inInterface == null) {
+            return;
+        }
+        if (inInterfaces.containsKey(inInterface)) {
+            inInterfaces.get(inInterface).increment();
+        } else {
+            inInterfaces.put(inInterface, new Counter(inInterface));
+        }
+        sizeMap(inInterfaces);
     }
 
     public synchronized void updateGlobal(LogEntry le, long now) {

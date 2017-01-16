@@ -19,9 +19,13 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
     private final Map<String, Integer> counter = new TreeMap<>();
     private final IdentityExtractor<T> identityExtractor;
 
-    public AggregatingFixedSizeList(int size, IdentityExtractor<T> identityExtractor) {
+    /**
+     *
+     * @param size max size of this aggregator.
+     * @param identityExtractor Functor to extract the identiy of the aggregate.
+     */
+    public AggregatingFixedSizeList(final int size, final IdentityExtractor<T> identityExtractor) {
         super(size);
-
         this.identityExtractor = identityExtractor;
     }
 

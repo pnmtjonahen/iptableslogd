@@ -14,17 +14,13 @@ public final class CounterComparator implements Comparator<Counter>, Serializabl
 
     @Override
     public int compare(Counter o1, Counter o2) {
-        return compareTo(o2, o1);
-    }
-
-    private int compareTo(Counter ths, Counter other) {
-        if (ths.getCount() == other.getCount()) {
-            if (ths.getLastseen() == other.getLastseen()) {
+        if (o2.getCount() == o1.getCount()) {
+            if (o2.getLastseen() == o1.getLastseen()) {
                 return 0;
-            } else if (ths.getLastseen() < other.getLastseen()) {
+            } else if (o2.getLastseen() < o1.getLastseen()) {
                 return -1;
             }
-        } else if (ths.getCount() < other.getCount()) {
+        } else if (o2.getCount() < o1.getCount()) {
             return -1;
         }
         return 1;
