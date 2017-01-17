@@ -7,7 +7,8 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 /**
- * LogEntry java representation of a single line loged by the iptables ulog deamon.
+ * LogEntry java representation of a single line loged by the iptables ulog
+ * deamon.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -16,7 +17,7 @@ public class LogEntry {
 
     private final String dateTime;
     private String inInterface = "";
-    private String outInterface  = "";
+    private String outInterface = "";
     private String macAdress = "";
     private String source = "";
     private String destination = "";
@@ -36,14 +37,14 @@ public class LogEntry {
     private static final int YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private static final Logger LOGGER = Logger.getLogger(LogEntry.class.getName());
 
-    public LogEntry(String line) throws ParseException {
+    public LogEntry(String line) {
 //Oct 23 09:25:49 nx9420 kernel: IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:00:14:22:f2:f9:c2:08:00 SRC=192.168.0.105 DST=192.168.0.255 LEN=78 TOS=0x00 PREC=0x00 
 //		TTL=128 ID=21157 PROTO=UDP SPT=137 DPT=137 LEN=58
 //Jun 18 16:10:09 eb8740w  IN=wlan0 OUT= MAC=01:00:5e:00:00:fb:dc:86:d8:21:50:94:08:00 SRC=145.89.78.8 DST=224.0.0.251 LEN=248 TOS=00 PREC=0x00 
 //              TTL=255 ID=33635 PROTO=UDP SPT=5353 DPT=5353 LEN=228 MARK=0 
         dateTime = line.substring(0, 15);
         LOGGER.fine(() -> String.format("Current date :%d %s", YEAR, dateTime));
-        date = fmt.parse("" + YEAR + " " + dateTime);
+        date = parseDate();
         String[] elements = line.split(" ");
 
         for (String element : elements) {
@@ -80,6 +81,14 @@ public class LogEntry {
             } else if (element.startsWith("DPT")) {
                 destinationPort = element.substring(4);
             }
+        }
+    }
+
+    private Date parseDate() {
+        try {
+            return fmt.parse("" + YEAR + " " + dateTime);
+        } catch (ParseException ex) {
+            return new Date(0); // return the imposible date of 1 jan 1970
         }
     }
 

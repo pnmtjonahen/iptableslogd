@@ -1,17 +1,19 @@
-package nl.tjonahen.iptableslogd;
+package nl.tjonahen.iptableslogd.jmx;
+
+import nl.tjonahen.iptableslogd.HttpServer;
 
 /**
  * HttpServerConfiguration MBean.
  *
  */
-public final class HttpServerConfiguration implements HttpServerConfigurationMBean {
+public final class IpTablesLogdConfiguration implements IpTablesLogdConfigurationMBean {
 
     private int poolSize;
     private boolean useReverseLookup = true;
     private String context;
     private final HttpServer httpServer;
 
-    public HttpServerConfiguration(final HttpServer httpServer, final int poolSize, final String context) {
+    public IpTablesLogdConfiguration(final HttpServer httpServer, final int poolSize, final String context) {
         this.httpServer = httpServer;
         this.poolSize = poolSize;
         this.context = context;

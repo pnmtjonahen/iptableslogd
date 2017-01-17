@@ -1,6 +1,6 @@
-package nl.tjonahen.iptableslogd;
+package nl.tjonahen.iptableslogd.jmx;
 
-public interface HttpServerConfigurationMBean {
+public interface IpTablesLogdConfigurationMBean {
 
     void setPoolSize(int poolSize);
 

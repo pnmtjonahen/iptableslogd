@@ -4,36 +4,39 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
+import nl.tjonahen.iptableslogd.jmx.IpTablesLogdConfiguration;
 
 public final class IPTablesLogHandler implements Runnable {
+
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
     private final String ulog;
     private final File file;
-    
+    private final IpTablesLogdConfiguration config;
+
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
-    public IPTablesLogHandler(String ulog) {
+
+    public IPTablesLogHandler(String ulog, IpTablesLogdConfiguration config) {
         this.ulog = ulog;
         this.file = new File(ulog);
+        this.config = config;
     }
-
 
     @Override
     public void run() {
-        LOGGER.fine(() -> "Start reading log " + ulog);
-        
+        LOGGER.info(() -> "Start reading log " + ulog);
+
         try {
-            last = 0; 
-            position = 0; 
+            last = 0;
+            position = 0;
             RandomAccessFile reader = openReader();
 
-            while (true) {
+            while (config.canContinue()) {
                 if (isRotated()) {
                     reader = rotateReader(reader);
                     continue;
@@ -43,7 +46,7 @@ public final class IPTablesLogHandler implements Runnable {
                 sleepQuietly();
             }
 
-        } catch (IOException | ParseException e) {
+        } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Exception processing input ", e);
         }
     }
@@ -52,7 +55,7 @@ public final class IPTablesLogHandler implements Runnable {
         return file.length() < position;
     }
 
-    private void processNewLines(RandomAccessFile reader) throws ParseException, IOException {
+    private void processNewLines(RandomAccessFile reader) throws IOException {
         if (isMoreDataAvailable()) {
             last = System.currentTimeMillis();
             position = readLines(reader);
@@ -74,6 +77,7 @@ public final class IPTablesLogHandler implements Runnable {
     private boolean isMoreDataAvailable() {
         return file.length() > position;
     }
+
     private RandomAccessFile rotateReader(final RandomAccessFile oldReader) {
         LOGGER.info("File was rotated... ");
         try {
@@ -116,7 +120,7 @@ public final class IPTablesLogHandler implements Runnable {
         }
     }
 
-    private long readLines(final RandomAccessFile reader) throws IOException, ParseException {
+    private long readLines(final RandomAccessFile reader) throws IOException {
         String line = reader.readLine();
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);

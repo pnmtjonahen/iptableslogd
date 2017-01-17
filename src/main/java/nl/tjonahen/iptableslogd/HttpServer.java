@@ -1,5 +1,6 @@
 package nl.tjonahen.iptableslogd;
 
+import nl.tjonahen.iptableslogd.jmx.IpTablesLogdConfiguration;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
@@ -19,6 +20,7 @@ import javax.management.ObjectName;
 
 import nl.tjonahen.iptableslogd.input.IPTablesLogHandler;
 import nl.tjonahen.iptableslogd.output.HttpRequestHandler;
+import nl.tjonahen.iptableslogd.jmx.IpTablesLogdConfigurationMBean;
 
 public final class HttpServer {
     private static final Logger LOGGER = Logger.getLogger(HttpServer.class.getName());
@@ -56,39 +58,46 @@ public final class HttpServer {
             }
         }
 
-        LOGGER.info("iptableslogd starting.");
-        // start the log messages reader thread
-        new Thread(new IPTablesLogHandler(ulog)).start();
+        LOGGER.info("Starting.");
 
         try {
-            // Start the server.
-            new HttpServer().server(port, poolSize, context);
+            final HttpServer httpServer = new HttpServer();
+            httpServer.initJmx(poolSize, context);
+            httpServer.initLogHandler(ulog);
+            httpServer.server(port, context);
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | IOException e) {
             LOGGER.severe(e.getMessage());
         }
-        LOGGER.info("iptableslogd exit.");
+        LOGGER.info("Exit.");
     }
 
     /**
      * The thread pool instance.
      */
     private ExecutorService pool;
+    private IpTablesLogdConfiguration config;
+    
+    private void initLogHandler(String ulog) {
+        new Thread(new IPTablesLogHandler(ulog, config)).start();
+    }
+    
+    private void initJmx(int poolSize, String context) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanRegistrationException, NotCompliantMBeanException {
+        // setup HttpServerConfiguratie MBean
+        this.config = new IpTablesLogdConfiguration(this, poolSize, context);
+        setupJmx(config);
+       
+    }
 
-    private void server(int port, int poolSize, String context) throws MalformedObjectNameException, InstanceAlreadyExistsException,
-            MBeanRegistrationException, NotCompliantMBeanException, IOException {
+    private void server(int port, String context) throws IOException {
         ServerSocket serverSocket;
 
-        // setup HttpServerConfiguratie MBean
-        HttpServerConfiguration config = new HttpServerConfiguration(this, poolSize, context);
-
-        setupJmx(config);
 
         // print out the port number for user
         serverSocket = new ServerSocket(port);
         LOGGER.fine(() ->  String.format("httpServer running on port %s with context %s", serverSocket.getLocalPort(), context) );
         setupPool(config);
 
-        LOGGER.info("httpServer up and running...");
+        LOGGER.info("HttpServer up and running, serving pages.");
         // server infinite loop
         while (config.canContinue()) {
             try {
@@ -103,18 +112,18 @@ public final class HttpServer {
             } catch (SocketTimeoutException e) {
                 // ignore time outs
             } catch (IOException e) {
-                LOGGER.severe(() -> "fire worker thread:" + e.getMessage());
+                LOGGER.severe(() -> "Fire worker thread:" + e.getMessage());
             }
         }
         shutdownAndAwaitTermination(pool);
 
     }
 
-    public void setupPool(HttpServerConfigurationMBean config) {
+    public void setupPool(IpTablesLogdConfigurationMBean config) {
         if (pool != null) {
             shutdownAndAwaitTermination(pool);
         }
-        LOGGER.info("httpServer setup thread pool.");
+        LOGGER.fine("HttpServer setup thread pool.");
         pool = Executors.newFixedThreadPool(config.getPoolSize());
     }
 
@@ -138,15 +147,15 @@ public final class HttpServer {
         }
     }
 
-    private void setupJmx(HttpServerConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
+    private void setupJmx(IpTablesLogdConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
             MBeanRegistrationException, NotCompliantMBeanException {
 
-        LOGGER.info("httpServer setup jmx.");
+        LOGGER.info("Setup jmx.");
 
         // Get the Platform MBean Server
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         // Construct the ObjectName for the MBean we will register
-        ObjectName name = new ObjectName("nl.tjonahen.iptableslogd.HttpServer:type=configuration");
+        ObjectName name = new ObjectName("nl.tjonahen.iptableslogd.Config:type=configuration");
         // Register the HttpServer configuration MBean
         mbs.registerMBean(config, name);
     }

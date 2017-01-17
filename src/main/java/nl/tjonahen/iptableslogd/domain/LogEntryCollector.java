@@ -1,6 +1,5 @@
 package nl.tjonahen.iptableslogd.domain;
 
-import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,9 +51,8 @@ public final class LogEntryCollector {
      * Adds a new logentry line to the collector.
      *
      * @param logLine
-     * @throws ParseException
      */
-    public synchronized void addLogLine(String logLine) throws ParseException {
+    public synchronized void addLogLine(String logLine) {
         LogEntry lastEntry = new LogEntry(logLine);
         if (lastEntry.getDate().getTime() > (now - DAY)
                 && !detectPortScan(lastEntry)) {
