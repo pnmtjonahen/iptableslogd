@@ -14,7 +14,7 @@ import java.util.logging.Level;
 
 import java.util.logging.Logger;
 
-import nl.tjonahen.iptableslogd.jmx.IpTablesLogdConfiguration;
+import nl.tjonahen.iptableslogd.jmx.Configuration;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics.Counter;
@@ -30,11 +30,11 @@ public final class HttpRequestHandler implements Runnable {
     private final Socket socket;
     private final OutputStream output;
     private final BufferedReader br;
-    private final IpTablesLogdConfiguration config;
+    private final Configuration config;
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
     // Constructor
-    public HttpRequestHandler(final IpTablesLogdConfiguration config, final Socket socket)
+    public HttpRequestHandler(final Configuration config, final Socket socket)
             throws IOException {
         this.config = config;
         this.socket = socket;

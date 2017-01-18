@@ -6,14 +6,14 @@ import nl.tjonahen.iptableslogd.HttpServer;
  * HttpServerConfiguration MBean.
  *
  */
-public final class IpTablesLogdConfiguration implements IpTablesLogdConfigurationMBean {
+public final class Configuration implements ConfigurationMBean {
 
     private int poolSize;
     private boolean useReverseLookup = true;
     private String context;
     private final HttpServer httpServer;
 
-    public IpTablesLogdConfiguration(final HttpServer httpServer, final int poolSize, final String context) {
+    public Configuration(final HttpServer httpServer, final int poolSize, final String context) {
         this.httpServer = httpServer;
         this.poolSize = poolSize;
         this.context = context;

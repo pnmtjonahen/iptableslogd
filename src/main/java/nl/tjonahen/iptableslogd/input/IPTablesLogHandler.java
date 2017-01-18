@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
-import nl.tjonahen.iptableslogd.jmx.IpTablesLogdConfiguration;
+import nl.tjonahen.iptableslogd.jmx.Configuration;
 
 public final class IPTablesLogHandler implements Runnable {
 
@@ -16,12 +16,12 @@ public final class IPTablesLogHandler implements Runnable {
 
     private final String ulog;
     private final File file;
-    private final IpTablesLogdConfiguration config;
+    private final Configuration config;
 
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
 
-    public IPTablesLogHandler(String ulog, IpTablesLogdConfiguration config) {
+    public IPTablesLogHandler(String ulog, Configuration config) {
         this.ulog = ulog;
         this.file = new File(ulog);
         this.config = config;
