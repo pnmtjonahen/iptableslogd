@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.logging.Level;
 
 import java.util.logging.Logger;
+import javax.inject.Inject;
 
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
+import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics.Counter;
 
 /**
@@ -32,10 +34,12 @@ public final class HttpRequestHandler implements Runnable {
     private final BufferedReader br;
     private final Configuration config;
     private final LogEntryCollector logEntryCollector;
+    private final LogEntryStatistics logEntryStatistics;
+
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
     // Constructor
-    public HttpRequestHandler(final Configuration config, final Socket socket, final LogEntryCollector logEntryCollector)
+    public HttpRequestHandler(final Configuration config, final Socket socket, final LogEntryCollector logEntryCollector, final LogEntryStatistics logEntryStatistics)
             throws IOException {
         this.config = config;
         this.socket = socket;
@@ -43,6 +47,7 @@ public final class HttpRequestHandler implements Runnable {
         this.br = new BufferedReader(new InputStreamReader(socket
                 .getInputStream()));
         this.logEntryCollector = logEntryCollector;
+        this.logEntryStatistics = logEntryStatistics;
 
     }
 
@@ -125,10 +130,10 @@ public final class HttpRequestHandler implements Runnable {
     private String buildStatistics() {
         final StringBuilder data = new StringBuilder("");
         data.append(buildGlobalStatistics());
-        data.append(buildStatisticsTable("IN statistics:", logEntryCollector.getIpTablesStatistics().getInInterfaces()));
-        data.append(buildStatisticsTable("Protocol statistics:", logEntryCollector.getIpTablesStatistics().getProtocol()));
-        data.append(buildStatisticsTable("Port statistics:", logEntryCollector.getIpTablesStatistics().getPorts()));
-        data.append(buildStatisticsTable("Host statistics:", logEntryCollector.getIpTablesStatistics().getHosts()));
+        data.append(buildStatisticsTable("IN statistics:", logEntryStatistics.getInInterfaces()));
+        data.append(buildStatisticsTable("Protocol statistics:", logEntryStatistics.getProtocol()));
+        data.append(buildStatisticsTable("Port statistics:", logEntryStatistics.getPorts()));
+        data.append(buildStatisticsTable("Host statistics:", logEntryStatistics.getHosts()));
         return data.toString();
     }
 
@@ -138,17 +143,17 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='20%'>First</td>");
-        data.append("<td width='80%'>").append(new Date(logEntryCollector.getIpTablesStatistics().getStart())).append("</td>");
+        data.append("<td width='80%'>").append(new Date(logEntryStatistics.getStart())).append("</td>");
         data.append("</tr>");
         data.append("<tr>");
         data.append("<td width='20%'>Last</td>");
-        data.append("<td width='80%'>").append(new Date(logEntryCollector.getIpTablesStatistics().getEnd())).append("</td>");
+        data.append("<td width='80%'>").append(new Date(logEntryStatistics.getEnd())).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='80%'>Count</td>");
-        data.append("<td width='20%'>").append(logEntryCollector.getIpTablesStatistics().getNumber()).append("</td>");
+        data.append("<td width='20%'>").append(logEntryStatistics.getNumber()).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         return data.toString();

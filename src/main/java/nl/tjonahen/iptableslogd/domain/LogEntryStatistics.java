@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import javax.inject.Singleton;
 import nl.tjonahen.iptableslogd.collection.FixedSizeList;
 
 /**
@@ -17,6 +18,7 @@ import nl.tjonahen.iptableslogd.collection.FixedSizeList;
  * @author Philippe Tjon-A-Hen
  *
  */
+@Singleton
 public final class LogEntryStatistics {
 
     private long start = 0;

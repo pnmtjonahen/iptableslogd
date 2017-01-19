@@ -33,11 +33,12 @@ public class LogEntry {
 
     private final Date date;
     private final SimpleDateFormat fmt = new SimpleDateFormat("yyyy MMM dd HH:mm:ss");
-
+    private final PortNumbers portNumbers;
     private static final int YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private static final Logger LOGGER = Logger.getLogger(LogEntry.class.getName());
 
-    public LogEntry(String line) {
+    public LogEntry(String line, final PortNumbers portNumbers) {
+        this.portNumbers = portNumbers;
 //Oct 23 09:25:49 nx9420 kernel: IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:00:14:22:f2:f9:c2:08:00 SRC=192.168.0.105 DST=192.168.0.255 LEN=78 TOS=0x00 PREC=0x00 
 //		TTL=128 ID=21157 PROTO=UDP SPT=137 DPT=137 LEN=58
 //Jun 18 16:10:09 eb8740w  IN=wlan0 OUT= MAC=01:00:5e:00:00:fb:dc:86:d8:21:50:94:08:00 SRC=145.89.78.8 DST=224.0.0.251 LEN=248 TOS=00 PREC=0x00 
@@ -137,19 +138,19 @@ public class LogEntry {
     }
 
     public final String portDestinationName() {
-        return PortNumbers.instance().getDescription(destinationPort, protocol);
+        return portNumbers.getDescription(destinationPort, protocol);
     }
 
     public final String portSourceName() {
-        return PortNumbers.instance().getDescription(sourcePort, protocol);
+        return portNumbers.getDescription(sourcePort, protocol);
     }
 
     public final boolean canIgnore() {
-        return PortNumbers.instance().canIgnorePort(destinationPort);
+        return portNumbers.canIgnorePort(destinationPort);
     }
 
     public final boolean isAttack() {
-        return PortNumbers.instance().isKnownAttackPort(destinationPort);
+        return portNumbers.isKnownAttackPort(destinationPort);
     }
 
 }

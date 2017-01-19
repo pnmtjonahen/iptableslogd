@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Logger;
+import javax.inject.Singleton;
 
 /**
  * PortNumbers is a singleton to determine if a port number is known (has a description), if we can ignore it, or if it
@@ -14,20 +14,9 @@ import java.util.logging.Logger;
  * @author Philippe Tjon-A-Hen
  *
  */
+@Singleton
 public final class PortNumbers {
 
-    private static PortNumbers instance;
-
-    public static synchronized PortNumbers instance() {
-        if (instance == null) {
-            try {
-                instance = new PortNumbers();
-            } catch (IOException e) {
-                Logger.getLogger(PortNumbers.class.getName()).severe(() -> "Error loading PortNumbers " + e);
-            }
-        }
-        return instance;
-    }
 
     // read known portnumbers from properties file.
     private final Properties properties = new Properties();
