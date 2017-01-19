@@ -39,7 +39,6 @@ public final class LogEntryCollector {
     private PortNumbers portNumbers;
 
     private final long now;
-    private static final long DAY = 24 * 60 * 60 * 1000L;
     private static final long PORTSCANTIMESLOT = 5 * 1000L;
 
     public LogEntryCollector() {
@@ -51,10 +50,9 @@ public final class LogEntryCollector {
      *
      * @param logLine
      */
-    public synchronized void addLogLine(String logLine) {
+    public void addLogLine(String logLine) {
         LogEntry lastEntry = new LogEntry(logLine, portNumbers);
-        if (lastEntry.getDate().getTime() > (now - DAY)
-                && !detectPortScan(lastEntry)) {
+        if (!detectPortScan(lastEntry)) {
             // if a port scan was detected do not bother with statistics and
             // reporting
             // of individual dropped packages

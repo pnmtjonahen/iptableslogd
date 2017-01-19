@@ -6,6 +6,7 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -39,7 +40,7 @@ public final class Configuration extends Observable implements ConfigurationMBea
     public void tearDown() {
         try {
             platformMBeanServer.unregisterMBean(this.objectName);
-        } catch (Exception e) {
+        } catch (InstanceNotFoundException | MBeanRegistrationException e) {
             throw new IllegalStateException("Unable to unregistration ConfigMBean ", e);
         }
     }
@@ -47,6 +48,9 @@ public final class Configuration extends Observable implements ConfigurationMBea
     private int poolSize = 5;
     private boolean useReverseLookup = true;
     private boolean shutdown = false;
+    
+    private int port;
+    private String ulog;
 
     @Override
     public void setPoolSize(int poolSize) {
@@ -78,4 +82,21 @@ public final class Configuration extends Observable implements ConfigurationMBea
         useReverseLookup = b;
     }
 
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public String getUlog() {
+        return ulog;
+    }
+
+    public void setUlog(String ulog) {
+        this.ulog = ulog;
+    }
+
+    
 }

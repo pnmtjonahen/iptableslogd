@@ -6,31 +6,38 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
+@Singleton
 public final class IPTablesLogHandler implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
-    private final String ulog;
-    private final File file;
-    private final Configuration config;
-    private final LogEntryCollector logEntryCollector;
+    private String ulog;
+    private File file;
+
+    @Inject
+    private Configuration config;
+    @Inject
+    private LogEntryCollector logEntryCollector;
 
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
 
-    public IPTablesLogHandler(String ulog, Configuration config, final LogEntryCollector logEntryCollector) {
+    private void setLogFile(String ulog) {
         this.ulog = ulog;
         this.file = new File(ulog);
-        this.config = config;
-        this.logEntryCollector = logEntryCollector;
     }
 
+    
     @Override
     public void run() {
+        setLogFile(config.getUlog());
         LOGGER.info(() -> "Start reading log " + ulog);
 
         try {
@@ -105,8 +112,8 @@ public final class IPTablesLogHandler implements Runnable {
             if (reader == null) {
                 sleepQuietly();
             } else {
-                // The current position in the file
-                position = 0;
+                // The current position in the end of the file
+                position = file.length();
                 last = System.currentTimeMillis();
                 reader.seek(position);
             }
