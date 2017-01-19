@@ -31,16 +31,18 @@ public final class HttpRequestHandler implements Runnable {
     private final OutputStream output;
     private final BufferedReader br;
     private final Configuration config;
+    private final LogEntryCollector logEntryCollector;
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
     // Constructor
-    public HttpRequestHandler(final Configuration config, final Socket socket)
+    public HttpRequestHandler(final Configuration config, final Socket socket, final LogEntryCollector logEntryCollector)
             throws IOException {
         this.config = config;
         this.socket = socket;
         this.output = socket.getOutputStream();
         this.br = new BufferedReader(new InputStreamReader(socket
                 .getInputStream()));
+        this.logEntryCollector = logEntryCollector;
 
     }
 
@@ -99,13 +101,13 @@ public final class HttpRequestHandler implements Runnable {
     }
 
     private String addMetaData() {
-        return "<META HTTP-EQUIV='Refresh' CONTENT='10; URL=" + config.getContext() + "'>";
+        return "<META HTTP-EQUIV='Refresh' CONTENT='10; URL=/'>";
     }
 
     private String addStyle() {
         return "<style>table tr.special td { border-bottom: 1px solid #ff0000;  }"
                 + "body { font-family: Courier, monospace; font-size: 8pt; }</style>";
-//		 "body { font-family: Courier, monospace; font-size: 8pt; margin: 0px; padding: 0px; background: blue; color: yellow;}</style>";
+//		 + "body { font-family: Courier, monospace; font-size: 8pt; margin: 0px; padding: 0px; background: blue; color: yellow;}</style>";
     }
 
     private String buildBody() {
@@ -123,10 +125,10 @@ public final class HttpRequestHandler implements Runnable {
     private String buildStatistics() {
         final StringBuilder data = new StringBuilder("");
         data.append(buildGlobalStatistics());
-        data.append(buildStatisticsTable("IN statistics:", LogEntryCollector.instance().getIpTablesStatistics().getInInterfaces()));
-        data.append(buildStatisticsTable("Protocol statistics:", LogEntryCollector.instance().getIpTablesStatistics().getProtocol()));
-        data.append(buildStatisticsTable("Port statistics:", LogEntryCollector.instance().getIpTablesStatistics().getPorts()));
-        data.append(buildStatisticsTable("Host statistics:", LogEntryCollector.instance().getIpTablesStatistics().getHosts()));
+        data.append(buildStatisticsTable("IN statistics:", logEntryCollector.getIpTablesStatistics().getInInterfaces()));
+        data.append(buildStatisticsTable("Protocol statistics:", logEntryCollector.getIpTablesStatistics().getProtocol()));
+        data.append(buildStatisticsTable("Port statistics:", logEntryCollector.getIpTablesStatistics().getPorts()));
+        data.append(buildStatisticsTable("Host statistics:", logEntryCollector.getIpTablesStatistics().getHosts()));
         return data.toString();
     }
 
@@ -136,17 +138,17 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='20%'>First</td>");
-        data.append("<td width='80%'>").append(new Date(LogEntryCollector.instance().getIpTablesStatistics().getStart())).append("</td>");
+        data.append("<td width='80%'>").append(new Date(logEntryCollector.getIpTablesStatistics().getStart())).append("</td>");
         data.append("</tr>");
         data.append("<tr>");
         data.append("<td width='20%'>Last</td>");
-        data.append("<td width='80%'>").append(new Date(LogEntryCollector.instance().getIpTablesStatistics().getEnd())).append("</td>");
+        data.append("<td width='80%'>").append(new Date(logEntryCollector.getIpTablesStatistics().getEnd())).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         data.append("<table width='100%'>");
         data.append("<tr>");
         data.append("<td width='80%'>Count</td>");
-        data.append("<td width='20%'>").append(LogEntryCollector.instance().getIpTablesStatistics().getNumber()).append("</td>");
+        data.append("<td width='20%'>").append(logEntryCollector.getIpTablesStatistics().getNumber()).append("</td>");
         data.append("</tr>");
         data.append("</table>");
         return data.toString();
@@ -175,7 +177,7 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<h3>Last suspicious packages dropped:</h3>");
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td><td>proto</td><td width='100%'>port</td></tr>");
-        List<LogEntry> lines = LogEntryCollector.instance().getErrorLogLines();
+        List<LogEntry> lines = logEntryCollector.getErrorLogLines();
         lines.forEach((line) -> {
             data.append(addLogEntry(line, 0));
         });
@@ -188,7 +190,7 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<h3>Possible portscan sources</h3>");
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td></tr>");
-        Collections.synchronizedList(LogEntryCollector.instance().getPortScans())
+        Collections.synchronizedList(logEntryCollector.getPortScans())
                 .stream()
                 .filter((line) -> (line != null))
                 .map((line) -> {
@@ -224,7 +226,7 @@ public final class HttpRequestHandler implements Runnable {
         data.append("<h3>Last packages dropped:</h3>");
         data.append("<table width='100%'>");
         data.append("<tr><td nowrap width='10%'>Date/Time</td><td width='25%'>source</td><td>proto</td><td width='100%'>port</td></tr>");
-        List<LogEntry> lines = LogEntryCollector.instance().getAllLogLines();
+        List<LogEntry> lines = logEntryCollector.getAllLogLines();
         lines.forEach((line) -> {
             data.append(addLogEntry(line, -1));
         });

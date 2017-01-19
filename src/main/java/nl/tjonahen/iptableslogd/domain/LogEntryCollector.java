@@ -2,6 +2,7 @@ package nl.tjonahen.iptableslogd.domain;
 
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Singleton;
 
 import nl.tjonahen.iptableslogd.collection.AggregatingFixedSizeList;
 import nl.tjonahen.iptableslogd.collection.FixedSizeList;
@@ -16,16 +17,8 @@ import nl.tjonahen.iptableslogd.collection.FixedSizeList;
  * @author Philippe Tjon-A-Hen
  *
  */
+@Singleton
 public final class LogEntryCollector {
-
-    private static LogEntryCollector instance = null;
-
-    public static synchronized LogEntryCollector instance() {
-        if (instance == null) {
-            instance = new LogEntryCollector();
-        }
-        return instance;
-    }
 
     private final List<LogEntry> all = Collections.synchronizedList(new FixedSizeList<>(10));
     private final List<LogEntry> portScans = Collections.synchronizedList(new AggregatingFixedSizeList<>(5, (t) -> t.getSource()));
@@ -43,7 +36,7 @@ public final class LogEntryCollector {
     private static final long DAY = 24 * 60 * 60 * 1000L;
     private static final long PORTSCANTIMESLOT = 5 * 1000L;
 
-    private LogEntryCollector() {
+    public LogEntryCollector() {
         now = System.currentTimeMillis();
     }
 

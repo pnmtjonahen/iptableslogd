@@ -17,14 +17,16 @@ public final class IPTablesLogHandler implements Runnable {
     private final String ulog;
     private final File file;
     private final Configuration config;
+    private final LogEntryCollector logEntryCollector;
 
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
 
-    public IPTablesLogHandler(String ulog, Configuration config) {
+    public IPTablesLogHandler(String ulog, Configuration config, final LogEntryCollector logEntryCollector) {
         this.ulog = ulog;
         this.file = new File(ulog);
         this.config = config;
+        this.logEntryCollector = logEntryCollector;
     }
 
     @Override
@@ -124,7 +126,7 @@ public final class IPTablesLogHandler implements Runnable {
         String line = reader.readLine();
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);
-            LogEntryCollector.instance().addLogLine(line);
+            logEntryCollector.addLogLine(line);
             line = reader.readLine();
         }
         return reader.getFilePointer();

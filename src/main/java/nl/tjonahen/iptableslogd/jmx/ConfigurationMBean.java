@@ -12,7 +12,4 @@ public interface ConfigurationMBean {
 
     boolean getUseReverseLookup();
 
-    void setContext(String context);
-
-    String getContext();
 }

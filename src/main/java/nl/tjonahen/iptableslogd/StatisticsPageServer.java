@@ -6,10 +6,14 @@ import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -17,15 +21,20 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 
 import nl.tjonahen.iptableslogd.input.IPTablesLogHandler;
 import nl.tjonahen.iptableslogd.output.HttpRequestHandler;
 import nl.tjonahen.iptableslogd.jmx.ConfigurationMBean;
 
-public final class HttpServer {
-    private static final Logger LOGGER = Logger.getLogger(HttpServer.class.getName());
+@Singleton
+public final class StatisticsPageServer implements Observer {
+    private static final Logger LOGGER = Logger.getLogger(StatisticsPageServer.class.getName());
 
-    public static void main(String args[]) {
+    @Inject 
+    private LogEntryCollector logEntryCollector;
+    
+    public void run(String args[]) {
         int port = 4000;
         int poolSize = 5;
         String ulog = "/var/log/ulogd.syslogemu";
@@ -61,10 +70,15 @@ public final class HttpServer {
         LOGGER.info("Starting.");
 
         try {
-            final HttpServer httpServer = new HttpServer();
-            httpServer.initJmx(poolSize, context);
-            httpServer.initLogHandler(ulog);
-            httpServer.server(port, context);
+            this.config = new Configuration();
+            this.config.setPoolSize(poolSize);
+            
+            this.config.addObserver(this);
+
+            initJmx();
+            initLogHandler(ulog);
+
+            server(port, context);
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | IOException e) {
             LOGGER.severe(e.getMessage());
         }
@@ -78,22 +92,18 @@ public final class HttpServer {
     private Configuration config;
     
     private void initLogHandler(String ulog) {
-        new Thread(new IPTablesLogHandler(ulog, config)).start();
+        new Thread(new IPTablesLogHandler(ulog, config, logEntryCollector)).start();
     }
     
-    private void initJmx(int poolSize, String context) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanRegistrationException, NotCompliantMBeanException {
+    private void initJmx() throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanRegistrationException, NotCompliantMBeanException {
         // setup HttpServerConfiguratie MBean
-        this.config = new Configuration(this, poolSize, context);
         setupJmx(config);
        
     }
 
     private void server(int port, String context) throws IOException {
-        ServerSocket serverSocket;
-
-
+        final ServerSocket serverSocket = new ServerSocket(port);
         // print out the port number for user
-        serverSocket = new ServerSocket(port);
         LOGGER.fine(() ->  String.format("httpServer running on port %s with context %s", serverSocket.getLocalPort(), context) );
         setupPool(config);
 
@@ -108,7 +118,7 @@ public final class HttpServer {
 
                 // Construct handler to process the HTTP request message.
                 // Create a new thread to process the request.
-                pool.execute(new HttpRequestHandler(config, socket));
+                pool.execute(new HttpRequestHandler(config, socket, logEntryCollector));
             } catch (SocketTimeoutException e) {
                 // ignore time outs
             } catch (IOException e) {
@@ -147,16 +157,21 @@ public final class HttpServer {
         }
     }
 
-    private void setupJmx(ConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
+    private void setupJmx(final ConfigurationMBean config) throws MalformedObjectNameException, InstanceAlreadyExistsException,
             MBeanRegistrationException, NotCompliantMBeanException {
 
         LOGGER.info("Setup jmx.");
 
         // Get the Platform MBean Server
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         // Construct the ObjectName for the MBean we will register
-        ObjectName name = new ObjectName("nl.tjonahen.iptableslogd.Config:type=configuration");
+        final ObjectName name = new ObjectName("nl.tjonahen.iptableslogd.Config:type=configuration");
         // Register the HttpServer configuration MBean
         mbs.registerMBean(config, name);
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        setupPool(config);
     }
 }

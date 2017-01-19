@@ -1,28 +1,22 @@
 package nl.tjonahen.iptableslogd.jmx;
 
-import nl.tjonahen.iptableslogd.HttpServer;
+import java.util.Observable;
 
 /**
  * HttpServerConfiguration MBean.
  *
  */
-public final class Configuration implements ConfigurationMBean {
+public final class Configuration extends Observable implements ConfigurationMBean {
 
-    private int poolSize;
+    private int poolSize = 5;
     private boolean useReverseLookup = true;
-    private String context;
-    private final HttpServer httpServer;
-
-    public Configuration(final HttpServer httpServer, final int poolSize, final String context) {
-        this.httpServer = httpServer;
-        this.poolSize = poolSize;
-        this.context = context;
-    }
+    private boolean shutdown = false;
+    
 
     @Override
     public void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
-        httpServer.setupPool(this);
+        this.notifyObservers();
     }
 
     @Override
@@ -30,7 +24,6 @@ public final class Configuration implements ConfigurationMBean {
         return poolSize;
     }
 
-    private boolean shutdown = false;
 
     @Override
     public void shutdown() {
@@ -49,16 +42,6 @@ public final class Configuration implements ConfigurationMBean {
     @Override
     public void setUseReverseLookup(boolean b) {
         useReverseLookup = b;
-    }
-
-    @Override
-    public String getContext() {
-        return context;
-    }
-
-    @Override
-    public void setContext(String context) {
-        this.context = context;
     }
 
 }
