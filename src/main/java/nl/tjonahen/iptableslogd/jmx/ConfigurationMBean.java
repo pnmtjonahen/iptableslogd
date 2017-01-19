@@ -11,5 +11,9 @@ public interface ConfigurationMBean {
     void setUseReverseLookup(boolean b);
 
     boolean getUseReverseLookup();
+    
+    String getUlog();
+    
+    void setUlog(String ulog);
 
 }

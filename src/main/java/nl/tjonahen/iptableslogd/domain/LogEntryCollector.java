@@ -50,7 +50,7 @@ public final class LogEntryCollector {
      *
      * @param logLine
      */
-    public void addLogLine(String logLine) {
+    public synchronized void addLogLine(String logLine) {
         LogEntry lastEntry = new LogEntry(logLine, portNumbers);
         if (!detectPortScan(lastEntry)) {
             // if a port scan was detected do not bother with statistics and

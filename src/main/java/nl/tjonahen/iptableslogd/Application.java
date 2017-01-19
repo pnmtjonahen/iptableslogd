@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 ordina
+ * Copyright (C) 2017 Philippe Tjon - A - Hen
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,20 +53,20 @@ public class Application {
             }
         }
         
-        Weld weld = new Weld();
-        WeldContainer container = weld.initialize();
+        final Weld weld = new Weld();
+        final WeldContainer container = weld.initialize();
         // configure the application
-        Configuration config = container.instance().select(Configuration.class).get();
+        final Configuration config = container.instance().select(Configuration.class).get();
         config.setPoolSize(poolSize);
         config.setUlog(ulog);
         config.setPort(port);
         // start the loog tail thread
-        IPTablesLogHandler iPTablesLogHandler  = container.instance().select(IPTablesLogHandler.class).get();
-        new Thread(iPTablesLogHandler).start();
+        final IPTablesLogHandler iPTablesLogHandler  = container.instance().select(IPTablesLogHandler.class).get();
+        iPTablesLogHandler.start();
 
         // start the user interface
-        StatisticsPageServer application = container.instance().select(StatisticsPageServer.class).get();
-        application.run();
+        final StatisticsPageServer application = container.instance().select(StatisticsPageServer.class).get();
+        application.start();
         weld.shutdown();
     }
 

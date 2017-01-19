@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 ordina
+ * Copyright (C) 2017 Philippe Tjon - A - Hen
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
-import nl.tjonahen.iptableslogd.jmx.ConfigurationMBean;
 
 /**
  *
@@ -42,7 +41,8 @@ public class RequestThreadPool implements Observer {
      * The thread pool instance.
      */
     private ExecutorService pool;
-
+    private int currentPoolSize;
+    
     @Inject
     private Configuration config;
 
@@ -56,15 +56,18 @@ public class RequestThreadPool implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        setupPool();
+        if (currentPoolSize != config.getPoolSize()) {
+            setupPool();
+        }
     }
 
     private void setupPool() {
         if (pool != null) {
             shutdownAndAwaitTermination();
         }
-        LOGGER.info("Setup thread pool.");
-        pool = Executors.newFixedThreadPool(config.getPoolSize());
+        this.currentPoolSize = config.getPoolSize();
+        LOGGER.info(() ->  String.format("Setup thread pool for %d threads", currentPoolSize));
+        pool = Executors.newFixedThreadPool(currentPoolSize);
     }
 
     @PreDestroy

@@ -1,9 +1,26 @@
+/*
+ * Copyright (C) 2017 Philippe Tjon - A - Hen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package nl.tjonahen.iptableslogd.input;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Observer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -14,7 +31,7 @@ import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
 @Singleton
-public final class IPTablesLogHandler implements Runnable {
+public final class IPTablesLogHandler implements Observer {
 
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
@@ -23,6 +40,7 @@ public final class IPTablesLogHandler implements Runnable {
 
     @Inject
     private Configuration config;
+
     @Inject
     private LogEntryCollector logEntryCollector;
 
@@ -30,15 +48,22 @@ public final class IPTablesLogHandler implements Runnable {
     private long position; // position within the file
 
     private void setLogFile(String ulog) {
+        LOGGER.info(() -> "Start reading log " + ulog);
         this.ulog = ulog;
         this.file = new File(ulog);
     }
 
+    @PostConstruct
+    public void setup() {
+        config.addObserver(this);
+    }
+
+    public void start() {
+        new Thread(this::run).start();
+    }
     
-    @Override
     public void run() {
         setLogFile(config.getUlog());
-        LOGGER.info(() -> "Start reading log " + ulog);
 
         try {
             last = 0;
@@ -49,6 +74,9 @@ public final class IPTablesLogHandler implements Runnable {
                 if (isRotated()) {
                     reader = rotateReader(reader);
                     continue;
+                } else if (resetFile()) {
+                    setLogFile(config.getUlog());
+                    reader = openReader();
                 } else {
                     processNewLines(reader);
                 }
@@ -58,12 +86,16 @@ public final class IPTablesLogHandler implements Runnable {
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Exception processing input ", e);
         }
+        LOGGER.info(() -> "Stop reading log " + ulog);
     }
 
     private boolean isRotated() {
         return file.length() < position;
     }
 
+    private boolean resetFile() {
+        return !ulog.equals(config.getUlog());
+    }
     private void processNewLines(RandomAccessFile reader) throws IOException {
         if (isMoreDataAvailable()) {
             last = System.currentTimeMillis();
@@ -132,7 +164,7 @@ public final class IPTablesLogHandler implements Runnable {
     private long readLines(final RandomAccessFile reader) throws IOException {
         String line = reader.readLine();
         while (line != null) {
-            LOGGER.log(Level.FINE, "input: {0}", line);
+            LOGGER.log(Level.INFO, "input: {0}", line);
             logEntryCollector.addLogLine(line);
             line = reader.readLine();
         }
@@ -153,6 +185,13 @@ public final class IPTablesLogHandler implements Runnable {
             } catch (IOException e) {
                 // do nothing. suppress exceptions
             }
+        }
+    }
+
+    @Override
+    public void update(java.util.Observable o, Object arg) {
+        if (!ulog.equals(config.getUlog())) {
+            setLogFile(config.getUlog());
         }
     }
 
