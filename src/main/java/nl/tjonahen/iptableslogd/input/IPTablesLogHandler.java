@@ -164,7 +164,7 @@ public final class IPTablesLogHandler implements Observer {
     private long readLines(final RandomAccessFile reader) throws IOException {
         String line = reader.readLine();
         while (line != null) {
-            LOGGER.log(Level.INFO, "input: {0}", line);
+            LOGGER.log(Level.FINE, "input: {0}", line);
             logEntryCollector.addLogLine(line);
             line = reader.readLine();
         }
