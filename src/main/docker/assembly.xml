@@ -13,6 +13,15 @@
             <fileMode>755</fileMode>
         </fileSet>
         <fileSet>
+            <directory>${project.build.directory}/classes</directory>
+            <outputDirectory>/</outputDirectory>
+            <filtered>false</filtered>
+            <includes>
+                <include>logging.properties</include>
+            </includes>
+            <fileMode>666</fileMode>
+        </fileSet>
+        <fileSet>
             <directory>${project.build.directory}/dependency</directory>
             <outputDirectory>/dependency</outputDirectory>
             <filtered>false</filtered>
