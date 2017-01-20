@@ -18,6 +18,7 @@ package nl.tjonahen.iptableslogd.output;
 
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -91,8 +92,8 @@ public class RequestThreadPool implements Observer {
         }
     }
 
-    public void execute(HttpRequestHandler httpRequestHandler) {
-        pool.execute(httpRequestHandler);
+    public CompletableFuture<Void> runAsync(HttpRequestHandler httpRequestHandler) {
+        return CompletableFuture.runAsync(httpRequestHandler, pool);
     }
 
 }

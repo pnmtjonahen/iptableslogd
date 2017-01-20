@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Observer;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -84,7 +85,7 @@ public final class IPTablesLogHandler implements Observer {
             }
 
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Exception processing input ", e);
+            throw new IllegalStateException("Unable to read log " + ulog, e);
         }
         LOGGER.info(() -> "Stop reading log " + ulog);
     }
@@ -155,7 +156,7 @@ public final class IPTablesLogHandler implements Observer {
 
     private void sleepQuietly() {
         try {
-            Thread.sleep(10);
+            TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException e) {
             // do nothing. suppress exceptions
         }

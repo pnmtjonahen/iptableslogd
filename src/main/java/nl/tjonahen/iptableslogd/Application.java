@@ -16,6 +16,7 @@
  */
 package nl.tjonahen.iptableslogd;
 
+import javax.enterprise.inject.spi.CDI;
 import nl.tjonahen.iptableslogd.input.IPTablesLogHandler;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 import org.jboss.weld.environment.se.Weld;
@@ -54,19 +55,21 @@ public class Application {
         }
         
         final Weld weld = new Weld();
-        final WeldContainer container = weld.initialize();
+        weld.initialize();
         // configure the application
-        final Configuration config = container.instance().select(Configuration.class).get();
+        final Configuration config = CDI.current().select(Configuration.class).get();
         config.setPoolSize(poolSize);
         config.setUlog(ulog);
         config.setPort(port);
-        // start the loog tail thread
-        final IPTablesLogHandler iPTablesLogHandler  = container.instance().select(IPTablesLogHandler.class).get();
+        
+        // start the log tail thread
+        final IPTablesLogHandler iPTablesLogHandler  = CDI.current().select(IPTablesLogHandler.class).get();
         iPTablesLogHandler.start();
 
-        // start the user interface
-        final StatisticsPageServer application = container.instance().select(StatisticsPageServer.class).get();
+        // start the user interface server
+        final StatisticsPageServer application = CDI.current().select(StatisticsPageServer.class).get();
         application.start();
+        
         weld.shutdown();
     }
 
