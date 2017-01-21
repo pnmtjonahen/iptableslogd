@@ -27,8 +27,6 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
-import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
 
 import nl.tjonahen.iptableslogd.output.HttpRequestHandlerFactory;
 import nl.tjonahen.iptableslogd.output.RequestThreadPool;

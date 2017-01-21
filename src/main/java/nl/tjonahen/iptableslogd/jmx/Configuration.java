@@ -17,6 +17,7 @@
 package nl.tjonahen.iptableslogd.jmx;
 
 import java.util.Observable;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -35,7 +36,8 @@ import javax.management.ObjectName;
  */
 @Singleton
 public final class Configuration extends Observable implements ConfigurationMBean {
-
+    private static final Logger LOGGER = Logger.getLogger(Configuration.class.getName());
+    
     @Inject
     private MBeanServer platformMBeanServer;
     
@@ -43,6 +45,7 @@ public final class Configuration extends Observable implements ConfigurationMBea
 
     @PostConstruct
     public void setup() {
+        LOGGER.info("Initializing JMX.");
         try {
             objectName = new ObjectName("nl.tjonahen.iptableslogd.Config:type=configuration");
             // Register the HttpServer configuration MBean
