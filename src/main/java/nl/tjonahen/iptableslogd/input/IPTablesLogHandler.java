@@ -16,8 +16,10 @@
  */
 package nl.tjonahen.iptableslogd.input;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Observer;
@@ -69,8 +71,8 @@ public final class IPTablesLogHandler implements Observer {
         try {
             last = 0;
             position = 0;
-            RandomAccessFile reader = openReader();
-
+//            RandomAccessFile reader = openReader();
+            BufferedReader reader = openReader();
             while (config.canContinue()) {
                 if (isRotated()) {
                     reader = rotateReader(reader);
@@ -97,7 +99,7 @@ public final class IPTablesLogHandler implements Observer {
     private boolean resetFile() {
         return !ulog.equals(config.getUlog());
     }
-    private void processNewLines(RandomAccessFile reader) throws IOException {
+    private void processNewLines(BufferedReader reader) throws IOException {
         if (isMoreDataAvailable()) {
             last = System.currentTimeMillis();
             position = readLines(reader);
@@ -108,7 +110,7 @@ public final class IPTablesLogHandler implements Observer {
             * this, the file position needs to be reset
              */
             position = 0;
-            reader.seek(position); // cannot be null here
+//            reader.seek(position); // cannot be null here
 
             // Now we can read new lines
             last = System.currentTimeMillis();
@@ -120,10 +122,10 @@ public final class IPTablesLogHandler implements Observer {
         return file.length() > position;
     }
 
-    private RandomAccessFile rotateReader(final RandomAccessFile oldReader) {
+    private BufferedReader rotateReader(final BufferedReader oldReader) {
         LOGGER.info("File was rotated... ");
         try {
-            final RandomAccessFile reader = new RandomAccessFile(file, "r");
+            final BufferedReader reader = new BufferedReader(new FileReader(file));
             position = 0;
             closeQuietly(oldReader);
             return reader;
@@ -133,12 +135,12 @@ public final class IPTablesLogHandler implements Observer {
         return oldReader;
     }
 
-    private RandomAccessFile openReader() throws IOException {
+    private BufferedReader openReader() throws IOException {
         // Open the file
-        RandomAccessFile reader = null;
+        BufferedReader reader = null;
         while (reader == null) {
             try {
-                reader = new RandomAccessFile(file, "r");
+                reader = new BufferedReader(new FileReader(file));
             } catch (FileNotFoundException e) {
                 LOGGER.log(Level.SEVERE, "File not found ", e);
             }
@@ -146,9 +148,9 @@ public final class IPTablesLogHandler implements Observer {
                 sleepQuietly();
             } else {
                 // The current position in the end of the file
-                position = file.length();
+                position = 0;//file.length();
                 last = System.currentTimeMillis();
-                reader.seek(position);
+//                reader.seek(position);
             }
         }
         return reader;
@@ -162,14 +164,14 @@ public final class IPTablesLogHandler implements Observer {
         }
     }
 
-    private long readLines(final RandomAccessFile reader) throws IOException {
+    private long readLines(final BufferedReader reader) throws IOException {
         String line = reader.readLine();
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);
             logEntryCollector.addLogLine(line);
             line = reader.readLine();
         }
-        return reader.getFilePointer();
+        return file.length();
     }
 
     private boolean isFileNewer() {
@@ -179,7 +181,7 @@ public final class IPTablesLogHandler implements Observer {
         return file.lastModified() > last;
     }
 
-    private void closeQuietly(final RandomAccessFile raFile) {
+    private void closeQuietly(final BufferedReader raFile) {
         if (raFile != null) {
             try {
                 raFile.close();

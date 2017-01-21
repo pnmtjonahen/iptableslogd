@@ -1,19 +1,34 @@
+/*
+ * Copyright (C) 2017 Philippe Tjon - A - Hen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package nl.tjonahen.iptableslogd.domain;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.inject.Singleton;
-import nl.tjonahen.iptableslogd.collection.FixedSizeList;
 
 /**
  * LogEntry statistics, counts the number of ports, hosts and protocol.
  *
  * This is shared between the IPTablesLogHandler thread via the
  * LogEntryCollector and the HttpRequestHandler thread.
+ * Th IPTablesLogHandler is a single thread that updates the data, the HttpRequestHandler can be on multiple thread reading this data.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -37,16 +52,16 @@ public final class LogEntryStatistics {
             this.data = data;
         }
 
-        public synchronized void increment() {
+        public void increment() {
             count++;
             lastseen = System.currentTimeMillis();
         }
 
-        public synchronized int getCount() {
+        public int getCount() {
             return count;
         }
 
-        public synchronized long getLastseen() {
+        public long getLastseen() {
             return lastseen;
         }
 
@@ -61,14 +76,9 @@ public final class LogEntryStatistics {
     private final Map<String, Counter> inInterfaces = new TreeMap<>();
 
     private List<Counter> getMapAsSortedList(Map<String, Counter> map) {
-        List<Counter> lst = new ArrayList<>();
-        lst.addAll(map.values());
-        Collections.sort(lst, new CounterComparator());
-        Collections.reverse(lst);
-        final FixedSizeList<Counter> fsl = new FixedSizeList<>(10);
-        fsl.addAll(lst);
-        Collections.reverse(fsl);
-        return Collections.synchronizedList(fsl);
+        synchronized(map) {
+            return map.values().stream().sorted(new CounterComparator()).limit(10).collect(Collectors.toList());
+        }
     }
 
     /**
@@ -76,7 +86,7 @@ public final class LogEntryStatistics {
      *
      * @return
      */
-    public synchronized List<Counter> getHosts() {
+    public List<Counter> getHosts() {
         return getMapAsSortedList(hosts);
     }
 
@@ -86,7 +96,7 @@ public final class LogEntryStatistics {
      *
      * @return
      */
-    public synchronized List<Counter> getProtocol() {
+    public List<Counter> getProtocol() {
         return getMapAsSortedList(protocol);
     }
 
@@ -95,27 +105,29 @@ public final class LogEntryStatistics {
      *
      * @return
      */
-    public synchronized List<Counter> getPorts() {
+    public List<Counter> getPorts() {
         return getMapAsSortedList(ports);
     }
+
     /**
-     * Get the inInterface counter list. The list is ordered by number of occurrences.
+     * Get the inInterface counter list. The list is ordered by number of
+     * occurrences.
      *
      * @return
      */
-    public synchronized List<Counter> getInInterfaces() {
+    public List<Counter> getInInterfaces() {
         return getMapAsSortedList(inInterfaces);
     }
 
-    public synchronized long getStart() {
+    public long getStart() {
         return start;
     }
 
-    public synchronized long getEnd() {
+    public long getEnd() {
         return end;
     }
 
-    public synchronized long getNumber() {
+    public long getNumber() {
         return number;
     }
 
@@ -124,13 +136,15 @@ public final class LogEntryStatistics {
      *
      * @param host
      */
-    public synchronized void addHost(String host) {
-        if (hosts.containsKey(host)) {
-            hosts.get(host).increment();
-        } else {
-            hosts.put(host, new Counter(host));
+    public void addHost(String host) {
+        synchronized (host) {
+            if (hosts.containsKey(host)) {
+                hosts.get(host).increment();
+            } else {
+                hosts.put(host, new Counter(host));
+            }
+            sizeMap(hosts);
         }
-        sizeMap(hosts);
     }
 
     /**
@@ -138,13 +152,15 @@ public final class LogEntryStatistics {
      *
      * @param proto
      */
-    public synchronized void addProtocol(String proto) {
-        if (protocol.containsKey(proto)) {
-            protocol.get(proto).increment();
-        } else {
-            protocol.put(proto, new Counter(proto));
+    public void addProtocol(String proto) {
+        synchronized (protocol) {
+            if (protocol.containsKey(proto)) {
+                protocol.get(proto).increment();
+            } else {
+                protocol.put(proto, new Counter(proto));
+            }
+            sizeMap(protocol);
         }
-        sizeMap(protocol);
     }
 
     /**
@@ -152,44 +168,47 @@ public final class LogEntryStatistics {
      *
      * @param port
      */
-    public synchronized void addPort(String port) {
-        if (port == null) {
+    public void addPort(String port) {
+        if (port == null || "".equals(port)) {
             return;
         }
-        if (ports.containsKey(port)) {
-            ports.get(port).increment();
-        } else {
-            ports.put(port, new Counter(port));
+        synchronized (ports) {
+            if (ports.containsKey(port)) {
+                ports.get(port).increment();
+            } else {
+                ports.put(port, new Counter(port));
+            }
+            sizeMap(ports);
         }
-        sizeMap(ports);
     }
+
     /**
      * Add a inInterface to the inInterface counter.
      *
      * @param inInterface
      */
-    public synchronized void addInInterface(String inInterface) {
-        if (inInterface == null) {
+    public void addInInterface(String inInterface) {
+        if (inInterface == null || "".equals(inInterface)) {
             return;
         }
-        if (inInterfaces.containsKey(inInterface)) {
-            inInterfaces.get(inInterface).increment();
-        } else {
-            inInterfaces.put(inInterface, new Counter(inInterface));
+        synchronized (inInterfaces) {
+            if (inInterfaces.containsKey(inInterface)) {
+                inInterfaces.get(inInterface).increment();
+            } else {
+                inInterfaces.put(inInterface, new Counter(inInterface));
+            }
+            sizeMap(inInterfaces);
         }
-        sizeMap(inInterfaces);
     }
 
-    public synchronized void updateGlobal(LogEntry le, long now) {
+    public void updateGlobal(LogEntry le) {
         if (start == 0) {
             start = le.getDate().getTime();
         }
         if (end < le.getDate().getTime()) {
             end = le.getDate().getTime();
         }
-        if (le.getDate().getTime() >= now) {
-            number++;
-        }
+        number++;
     }
 
     /*

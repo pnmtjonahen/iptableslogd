@@ -52,19 +52,11 @@ public final class StatisticsPageServer {
      * Starts the server socket accept connection loop
      */
     public void start() {
-        final ServerSocket serverSocket;
-
-        try {
-            serverSocket = new ServerSocket(config.getPort());
-            LOGGER.info(() -> String.format("http listner running on port %s", serverSocket.getLocalPort()));
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to create server socket ", e);
-        }
+        final ServerSocket serverSocket = openServerSocket();
 
         while (config.canContinue()) {
             try {
                 serverSocket.setSoTimeout(10);
-
                 final Socket socket = serverSocket.accept();
                 LOGGER.fine(() -> String.format("New connection accepted %s:%s", socket.getInetAddress(), socket.getPort()));
                 final OutputStream outputStream = socket.getOutputStream();
@@ -78,6 +70,16 @@ public final class StatisticsPageServer {
             }
         }
         LOGGER.info("Exit.");
+    }
+
+    private ServerSocket openServerSocket() throws IllegalStateException {
+        try {
+            final ServerSocket serverSocket = new ServerSocket(config.getPort());
+            LOGGER.info(() -> String.format("http listner running on port %s", serverSocket.getLocalPort()));
+            return serverSocket;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to create server socket ", e);
+        }
     }
 
     private void silentlyClose(Socket socket) {
