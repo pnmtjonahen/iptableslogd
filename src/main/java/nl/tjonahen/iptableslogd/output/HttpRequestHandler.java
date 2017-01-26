@@ -30,6 +30,7 @@ import nl.tjonahen.iptableslogd.domain.LogEntry;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics.Counter;
+import nl.tjonahen.iptableslogd.domain.PortNumbers;
 
 /**
  * Request handler, handles a single get.
@@ -43,14 +44,20 @@ public final class HttpRequestHandler implements Runnable {
     private final Configuration config;
     private final LogEntryCollector logEntryCollector;
     private final LogEntryStatistics logEntryStatistics;
+    private final PortNumbers portNumbers;
 
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
-    public HttpRequestHandler(final Configuration config, final OutputStream output, final LogEntryCollector logEntryCollector, final LogEntryStatistics logEntryStatistics) {
+    public HttpRequestHandler(final Configuration config, 
+                              final OutputStream output, 
+                              final LogEntryCollector logEntryCollector, 
+                              final LogEntryStatistics logEntryStatistics,
+                              final PortNumbers portNumbers) {
         this.config = config;
         this.output = output;
         this.logEntryCollector = logEntryCollector;
         this.logEntryStatistics = logEntryStatistics;
+        this.portNumbers = portNumbers;
     }
 
     @Override
@@ -234,7 +241,7 @@ public final class HttpRequestHandler implements Runnable {
     private String addLogEntry(final LogEntry line, final int count) {
         final StringBuilder data = new StringBuilder("");
         if (line != null) {
-            if (line.isAttack()) {
+            if (isAttack(line.getDestinationPort())) {
                 data.append("<tr>");
             } else {
                 data.append("<tr>");
@@ -256,10 +263,14 @@ public final class HttpRequestHandler implements Runnable {
             }
             data.append("</td>");
             data.append("<td>").append(line.getProtocol()).append("</td>");
-            data.append("<td>").append(line.portDestinationName()).append("</td>");
+            data.append("<td>").append(portNumbers.getDescription(line.getDestinationPort(), line.getProtocol())).append("</td>");
             data.append("</tr>");
         }
         return data.toString();
+    }
+
+    public final boolean isAttack(String destinationPort) {
+        return portNumbers.isKnownAttackPort(destinationPort);
     }
 
 }

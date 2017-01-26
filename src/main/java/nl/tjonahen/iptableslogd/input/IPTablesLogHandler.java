@@ -29,10 +29,11 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Destroyed;
 import javax.enterprise.context.Initialized;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import nl.tjonahen.iptableslogd.domain.LogEntry;
 
-import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
 @ApplicationScoped
@@ -47,16 +48,11 @@ public class IPTablesLogHandler implements Observer {
     private Configuration config;
 
     @Inject
-    private LogEntryCollector logEntryCollector;
+    private Event<LogEntry> logEntryEvent;    
 
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
 
-    private void setLogFile(String ulog) {
-        LOGGER.info(() -> "Start reading log " + ulog);
-        this.ulog = ulog;
-        this.file = new File(ulog);
-    }
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         start();
@@ -74,7 +70,7 @@ public class IPTablesLogHandler implements Observer {
         new Thread(this::run).start();
     }
     
-    public void run() {
+    private void run() {
         setLogFile(config.getUlog());
 
         try {
@@ -98,6 +94,11 @@ public class IPTablesLogHandler implements Observer {
             throw new IllegalStateException("Unable to read log " + ulog, e);
         }
         LOGGER.info(() -> "Stop reading log " + ulog);
+    }
+    private void setLogFile(String ulog) {
+        LOGGER.info(() -> "Start reading log " + ulog);
+        this.ulog = ulog;
+        this.file = new File(ulog);
     }
 
     private boolean isRotated() {
@@ -174,12 +175,8 @@ public class IPTablesLogHandler implements Observer {
         String line = reader.readLine();
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);
-            logEntryCollector.addLogLine(line);
-            if (config.canContinue()) {
-                line = reader.readLine();
-            } else {
-                line = null; // force shutdown
-            }
+            logEntryEvent.fire(new LogEntry(line));
+            line = reader.readLine();
         }
         return file.length();
     }

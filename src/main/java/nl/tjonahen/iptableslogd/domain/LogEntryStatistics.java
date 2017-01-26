@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -38,6 +40,9 @@ import javax.inject.Singleton;
  */
 @Singleton
 public final class LogEntryStatistics {
+    
+    @Inject 
+    private PortNumbers portNumbers;
 
     private long start = 0;
     private long end = 0;
@@ -134,12 +139,20 @@ public final class LogEntryStatistics {
         return number;
     }
 
+    public void updateStatistics(final @Observes LogEntry entry) {
+        updateGlobal(entry);
+        addHost(entry.getSource());
+        addProtocol(entry.getProtocol());
+        addPort(portNumbers.getDescription(entry.getDestinationPort(), entry.getProtocol()));
+        addInInterface(entry.getInInterface());
+    }
+    
     /**
      * Add a host name to the host counter.
      *
      * @param host
      */
-    public void addHost(String host) {
+    private void addHost(String host) {
         synchronized (host) {
             if (hosts.containsKey(host)) {
                 hosts.get(host).increment();
@@ -155,7 +168,7 @@ public final class LogEntryStatistics {
      *
      * @param proto
      */
-    public void addProtocol(String proto) {
+    private void addProtocol(String proto) {
         synchronized (protocol) {
             if (protocol.containsKey(proto)) {
                 protocol.get(proto).increment();
@@ -171,7 +184,7 @@ public final class LogEntryStatistics {
      *
      * @param port
      */
-    public void addPort(String port) {
+    private void addPort(String port) {
         if (port == null || "".equals(port)) {
             return;
         }
@@ -190,7 +203,7 @@ public final class LogEntryStatistics {
      *
      * @param inInterface
      */
-    public void addInInterface(String inInterface) {
+    private void addInInterface(String inInterface) {
         if (inInterface == null || "".equals(inInterface)) {
             return;
         }
@@ -204,7 +217,7 @@ public final class LogEntryStatistics {
         }
     }
 
-    public void updateGlobal(LogEntry le) {
+    private void updateGlobal(LogEntry le) {
         if (start == 0) {
             start = le.getDate().getTime();
         }

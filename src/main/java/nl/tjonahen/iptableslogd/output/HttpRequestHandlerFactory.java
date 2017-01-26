@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
+import nl.tjonahen.iptableslogd.domain.PortNumbers;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
 /**
@@ -38,9 +39,12 @@ public class HttpRequestHandlerFactory {
 
     @Inject
     private Configuration config;
+    
+    @Inject
+    private PortNumbers portNumbers;
 
     public HttpRequestHandler createHandler(OutputStream outputStream) {
-        return new HttpRequestHandler(config, outputStream, logEntryCollector, logEntryStatistics);
+        return new HttpRequestHandler(config, outputStream, logEntryCollector, logEntryStatistics, portNumbers);
     }
 
 }
