@@ -15,23 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package nl.tjonahen.iptableslogd.domain;
+package nl.tjonahen.iptableslogd.cdi;
 
-import java.util.Comparator;
-import java.util.Map.Entry;
-import nl.tjonahen.iptableslogd.domain.LogEntryStatistics.Counter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.inject.Singleton;
 
 /**
  *
  * @author Philippe Tjon - A - Hen
  */
-public class EntryComparator implements Comparator<Entry<String, Counter>>{
+@Singleton
+public class PropertyResolver {
+    private static final Logger LOGGER = Logger.getLogger(PropertyResolver.class.getName());
 
-    private final CounterComparator comparator = new CounterComparator();
-    
-    @Override
-    public int compare(Entry<String, Counter> o1, Entry<String, Counter> o2) {
-        return comparator.compare(o1.getValue(), o2.getValue());
+
+    /**
+    * Returns property held under specified <code>key</code>. If the value is supposed to be of any other
+    * type than {@link String}, it's up to the client to do appropriate casting.
+    *
+    * @param key the search key
+    * @return value for specified <code>key</code> or null if not defined.
+    */
+    public String getValue(String key) {
+        LOGGER.fine(() -> String.format("Resolv %s", key));
+        return System.getProperty(key);
     }
-
 }

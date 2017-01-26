@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package nl.tjonahen.iptableslogd.jmx;
+package nl.tjonahen.iptableslogd.cdi;
 
 import java.lang.management.ManagementFactory;
 import javax.enterprise.inject.Produces;

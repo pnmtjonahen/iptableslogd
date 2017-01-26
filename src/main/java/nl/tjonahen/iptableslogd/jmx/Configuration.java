@@ -29,6 +29,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import nl.tjonahen.iptableslogd.cdi.Value;
 
 /**
  * HttpServerConfiguration MBean.
@@ -65,11 +66,19 @@ public final class Configuration extends Observable implements ConfigurationMBea
         }
     }
 
-    private int poolSize = 5;
     private boolean useReverseLookup = false;
     private boolean shutdown = false;
     
+    @Inject
+    @Value("5")
+    private int poolSize;
+
+    @Inject
+    @Value("4080")
     private int port;
+    
+    @Inject
+    @Value("/var/log/ulogd.syslogemu")
     private String ulog;
 
     @Override

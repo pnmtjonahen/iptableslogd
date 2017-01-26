@@ -17,8 +17,6 @@
 package nl.tjonahen.iptableslogd;
 
 import javax.enterprise.inject.spi.CDI;
-import nl.tjonahen.iptableslogd.input.IPTablesLogHandler;
-import nl.tjonahen.iptableslogd.jmx.Configuration;
 import org.jboss.weld.environment.se.Weld;
 
 /**
@@ -28,47 +26,10 @@ import org.jboss.weld.environment.se.Weld;
 public class Application {
 
     public static void main(String[] args) {        
-        int port = 4080;
-        int poolSize = 5;
-        String ulog = "/var/log/ulogd.syslogemu";
-        // Parse commandline params
-        for (int i = 0; i < args.length; i++) {
-            if ("-p".equals(args[i])) {
-                port = Integer.parseInt(args[++i]);
-            }
-            if ("--port".equals(args[i])) {
-                port = Integer.parseInt(args[++i]);
-            }
-            if ("-t".equals(args[i])) {
-                poolSize = Integer.parseInt(args[++i]);
-            }
-            if ("--threads".equals(args[i])) {
-                poolSize = Integer.parseInt(args[++i]);
-            }
-            if ("-i".equals(args[i])) {
-                ulog = args[++i];
-            }
-            if ("--input".equals(args[i])) {
-                ulog = args[++i];
-            }
-        }
-        
         final Weld weld = new Weld();
         weld.initialize();
-        // configure the application
-        final Configuration config = CDI.current().select(Configuration.class).get();
-        config.setPoolSize(poolSize);
-        config.setUlog(ulog);
-        config.setPort(port);
-        
-        // start the log tail thread
-        final IPTablesLogHandler iPTablesLogHandler  = CDI.current().select(IPTablesLogHandler.class).get();
-        iPTablesLogHandler.start();
-
-        // start the user interface server
         final StatisticsPageServer application = CDI.current().select(StatisticsPageServer.class).get();
         application.start();
-        
         weld.shutdown();
     }
 

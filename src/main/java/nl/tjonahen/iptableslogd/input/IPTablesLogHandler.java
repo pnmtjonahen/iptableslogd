@@ -21,20 +21,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Destroyed;
+import javax.enterprise.context.Initialized;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
-@Singleton
-public final class IPTablesLogHandler implements Observer {
+@ApplicationScoped
+public class IPTablesLogHandler implements Observer {
 
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
@@ -56,6 +58,13 @@ public final class IPTablesLogHandler implements Observer {
         this.file = new File(ulog);
     }
 
+    public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
+        start();
+    }
+ 
+    public void destroy(@Observes @Destroyed(ApplicationScoped.class) Object init) {
+    }
+    
     @PostConstruct
     public void setup() {
         config.addObserver(this);
@@ -71,7 +80,6 @@ public final class IPTablesLogHandler implements Observer {
         try {
             last = 0;
             position = 0;
-//            RandomAccessFile reader = openReader();
             BufferedReader reader = openReader();
             while (config.canContinue()) {
                 if (isRotated()) {
@@ -110,7 +118,6 @@ public final class IPTablesLogHandler implements Observer {
             * this, the file position needs to be reset
              */
             position = 0;
-//            reader.seek(position); // cannot be null here
 
             // Now we can read new lines
             last = System.currentTimeMillis();
@@ -147,10 +154,9 @@ public final class IPTablesLogHandler implements Observer {
             if (reader == null) {
                 sleepQuietly();
             } else {
-                // The current position in the end of the file
-                position = 0;//file.length();
+                // The current position in the file (aka  start)
+                position = 0;
                 last = System.currentTimeMillis();
-//                reader.seek(position);
             }
         }
         return reader;
