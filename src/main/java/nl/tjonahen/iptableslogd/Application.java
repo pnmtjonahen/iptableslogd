@@ -29,8 +29,11 @@ public class Application {
         final Weld weld = new Weld();
         weld.initialize();
         final StatisticsPageServer application = CDI.current().select(StatisticsPageServer.class).get();
-        application.start();
-        weld.shutdown();
+        try {
+            application.start();
+        } finally {
+            weld.shutdown();
+        }
     }
 
 }

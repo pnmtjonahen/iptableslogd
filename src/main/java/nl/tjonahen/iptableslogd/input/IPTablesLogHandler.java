@@ -175,7 +175,11 @@ public class IPTablesLogHandler implements Observer {
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);
             logEntryCollector.addLogLine(line);
-            line = reader.readLine();
+            if (config.canContinue()) {
+                line = reader.readLine();
+            } else {
+                line = null; // force shutdown
+            }
         }
         return file.length();
     }

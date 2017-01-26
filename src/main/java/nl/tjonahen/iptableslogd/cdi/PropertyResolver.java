@@ -17,7 +17,6 @@
 
 package nl.tjonahen.iptableslogd.cdi;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.inject.Singleton;
 
@@ -29,16 +28,8 @@ import javax.inject.Singleton;
 public class PropertyResolver {
     private static final Logger LOGGER = Logger.getLogger(PropertyResolver.class.getName());
 
-
-    /**
-    * Returns property held under specified <code>key</code>. If the value is supposed to be of any other
-    * type than {@link String}, it's up to the client to do appropriate casting.
-    *
-    * @param key the search key
-    * @return value for specified <code>key</code> or null if not defined.
-    */
     public String getValue(String key) {
-        LOGGER.fine(() -> String.format("Resolv %s", key));
+        LOGGER.fine(() -> String.format("Resolve from System property %s", key));
         return System.getProperty(key);
     }
 }
