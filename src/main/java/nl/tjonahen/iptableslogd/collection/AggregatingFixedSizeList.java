@@ -44,8 +44,12 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
     public AggregatingFixedSizeList(final int size, final Function<T, String> identityExtractor) {
         super(size);
         this.identityExtractor = identityExtractor;
+        
+        this.setCallback((T t) -> {
+            counter.remove(identityExtractor.apply(t));
+            return null;
+        });
     }
-
     @Override
     public synchronized boolean add(T entry) {
         if (counter.containsKey(identityExtractor.apply(entry))) {
@@ -54,10 +58,6 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
         } else {
             super.add(entry);
             counter.put(identityExtractor.apply(entry), 1);
-            if (super.size() > getMaxSize()) {
-                T removed = super.remove(0);
-                counter.remove(identityExtractor.apply(removed));
-            }
         }
         return true;
     }
@@ -66,7 +66,7 @@ public final class AggregatingFixedSizeList<T> extends FixedSizeList<T> {
         if (counter.containsKey(identityExtractor.apply(entry))) {
             return counter.get(identityExtractor.apply(entry));
         }
-        return 1;
+        return 0;
     }
 
 }

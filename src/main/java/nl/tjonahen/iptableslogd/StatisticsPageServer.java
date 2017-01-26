@@ -62,7 +62,7 @@ public final class StatisticsPageServer {
                 final OutputStream outputStream = socket.getOutputStream();
 
                 // Construct handler to process the HTTP request message.
-                pool.runAsync(handlerFactory.createHandler(outputStream)).thenAccept((Void) -> silentlyClose(socket));
+                pool.runAsync(handlerFactory.createHandler(outputStream)).thenAccept((Void) -> silentlyClose(socket, outputStream));
             } catch (SocketTimeoutException e) {
                 // ignore time outs
             } catch (IOException e) {
@@ -82,9 +82,9 @@ public final class StatisticsPageServer {
         }
     }
 
-    private void silentlyClose(Socket socket) {
+    private void silentlyClose(final Socket socket, final OutputStream outputStream) {
         try {
-            socket.getOutputStream().close();
+            outputStream.close();
             socket.close();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error close socket ", e);

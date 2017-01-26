@@ -66,7 +66,7 @@ public final class Configuration extends Observable implements ConfigurationMBea
     }
 
     private int poolSize = 5;
-    private boolean useReverseLookup = true;
+    private boolean useReverseLookup = false;
     private boolean shutdown = false;
     
     private int port;

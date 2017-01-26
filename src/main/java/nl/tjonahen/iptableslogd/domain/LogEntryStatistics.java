@@ -16,9 +16,11 @@
  */
 package nl.tjonahen.iptableslogd.domain;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
@@ -27,8 +29,9 @@ import javax.inject.Singleton;
  * LogEntry statistics, counts the number of ports, hosts and protocol.
  *
  * This is shared between the IPTablesLogHandler thread via the
- * LogEntryCollector and the HttpRequestHandler thread.
- * Th IPTablesLogHandler is a single thread that updates the data, the HttpRequestHandler can be on multiple thread reading this data.
+ * LogEntryCollector and the HttpRequestHandler thread. Th IPTablesLogHandler is
+ * a single thread that updates the data, the HttpRequestHandler can be on
+ * multiple thread reading this data.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -76,8 +79,8 @@ public final class LogEntryStatistics {
     private final Map<String, Counter> inInterfaces = new TreeMap<>();
 
     private List<Counter> getMapAsSortedList(Map<String, Counter> map) {
-        synchronized(map) {
-            return map.values().stream().sorted(new CounterComparator()).limit(10).collect(Collectors.toList());
+        synchronized (map) {
+            return map.values().stream().sorted(new CounterComparator()).collect(Collectors.toList());
         }
     }
 
@@ -215,25 +218,13 @@ public final class LogEntryStatistics {
      *  Resize the map to max 10 elements.
      */
     private void sizeMap(Map<String, Counter> map) {
-        final CounterComparator comp = new CounterComparator();
+        final CounterComparator comparator = new CounterComparator();
+
         if (map.keySet().size() > 10) {
-            Set<String> keys = map.keySet();
-            Counter lowest = new Counter(null);
-            lowest.count = -1;
-            String lowestKey = null;
-            for (String key : keys) {
-                if (lowest.count < 0) {
-                    lowest = map.get(key);
-                } else {
-                    if (comp.compare(map.get(key), lowest) >= 0) {
-                        lowest = map.get(key);
-                        lowestKey = key;
-                    }
-                }
-            }
-            if (lowestKey != null) {
-                map.remove(lowestKey);
-            }
+            final List<Entry<String, Counter>> entries = new ArrayList<>(map.entrySet());
+            Collections.sort(entries, (Entry<String, Counter> o1, Entry<String, Counter> o2) -> comparator.compare(o1.getValue(), o2.getValue()));
+            map.clear();
+            entries.stream().limit(10).forEach((e) -> map.put(e.getKey(), e.getValue()));
         }
 
     }
