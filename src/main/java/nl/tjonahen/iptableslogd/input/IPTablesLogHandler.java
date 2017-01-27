@@ -47,7 +47,7 @@ public class IPTablesLogHandler {
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
 
     @Inject
-    @Value("/var/log/ulogd.syslogemu")
+    @Value(key = "ulog", value = "/var/log/ulogd.syslogemu")
     private String configUlog;
 
     private String ulog;

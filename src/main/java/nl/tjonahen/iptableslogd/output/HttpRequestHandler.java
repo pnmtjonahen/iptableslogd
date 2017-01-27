@@ -249,7 +249,7 @@ public final class HttpRequestHandler implements Runnable {
             data.append("<td>");
             if (useReverseLookup) {
                 try {
-                    InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
+                    final InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
                     data.append(cacheInetAddress.getHostName());
                 } catch (UnknownHostException e) {
                     data.append(line.getSource());
