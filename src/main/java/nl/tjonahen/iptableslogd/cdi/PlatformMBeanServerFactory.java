@@ -23,7 +23,8 @@ import javax.inject.Singleton;
 import javax.management.MBeanServer;
 
 /**
- *
+ * Factory for Platform MBeanServer. As CDI is not part of SE there is no need for a default platform mbeanserver within the JDK ?
+ * 
  * @author Philippe Tjon - A - Hen
  */
 @Singleton

@@ -24,13 +24,19 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import nl.tjonahen.iptableslogd.cdi.Value;
 
 
 import nl.tjonahen.iptableslogd.output.HttpRequestHandlerFactory;
 import nl.tjonahen.iptableslogd.output.RequestThreadPool;
-
+/**
+ * StatisticsPage server is a http server that renders a iptables dropped packages statistics view.
+ * 
+ * @author Philippe Tjon - A - Hen philippe@tjonahen.nl
+ */
 @Singleton
 public final class StatisticsPageServer {
 
@@ -40,21 +46,21 @@ public final class StatisticsPageServer {
     private HttpRequestHandlerFactory handlerFactory;
     
     @Inject
-    private Configuration config;
-
-    /**
-     * The thread pool instance.
-     */
-    @Inject
     private RequestThreadPool pool;
 
+    @Inject
+    @Value("4080")
+    private int port;
+
+    private boolean canContinue = true;
+    
     /**
      * Starts the server socket accept connection loop
      */
     public void start() {
         final ServerSocket serverSocket = openServerSocket();
 
-        while (config.canContinue()) {
+        while (canContinue) {
             try {
                 serverSocket.setSoTimeout(10);
                 final Socket socket = serverSocket.accept();
@@ -74,7 +80,7 @@ public final class StatisticsPageServer {
 
     private ServerSocket openServerSocket() throws IllegalStateException {
         try {
-            final ServerSocket serverSocket = new ServerSocket(config.getPort());
+            final ServerSocket serverSocket = new ServerSocket(port);
             LOGGER.info(() -> String.format("http listner running on port %s", serverSocket.getLocalPort()));
             return serverSocket;
         } catch (IOException e) {
@@ -90,5 +96,9 @@ public final class StatisticsPageServer {
             LOGGER.log(Level.SEVERE, "Error close socket ", e);
         }
 
+    }
+    
+    public void update(final @Observes Configuration c) {
+        canContinue = c.canContinue();
     }
 }

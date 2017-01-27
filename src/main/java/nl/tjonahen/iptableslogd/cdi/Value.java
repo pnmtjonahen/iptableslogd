@@ -25,7 +25,8 @@ import javax.enterprise.util.Nonbinding;
 import javax.inject.Qualifier;
 
 /**
- *
+ * Value annotation. To Annotate injection points for property values.
+ * 
  * @author Philippe Tjon - A - Hen
  */
 @Qualifier

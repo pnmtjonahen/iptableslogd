@@ -23,39 +23,25 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- *
+ * Factory to produce Values.
+ * 
+ * Properties are found first by key (if specified) then by fully qualified field name, and lastly by only field name.
+ * If no value was found and no default was given an exception is thrown.
+ * 
  * @author Philippe Tjon - A - Hen
  */
 @Singleton
-public class ValueProducer {
+public class ValueFactory {
 
     @Inject
     private PropertyResolver resolver;
 
-    /**
-    * Main producer method - tries to find a property value using following keys:
-    *
-    * <ol>
-    * <li><code>key</code> property of the {@link Value} annotation (if defined but no key is
-    * found - returns null),</li>
-    * <li>fully qualified field class name, e.g. <code>eu.awaketech.MyBean.myField</code> (if value is null,
-    * go along with the last resort),</li>
-    * <li>field name, e.g. <code>myField</code> for the example above (if the value is null, no can do -
-    * return null)</li>
-    * </ol>
-    *
-    * @param ip
-    * @return value of the injected property or null if no value could be found.
-    */
     @Produces
     @Value
-    public String getStringConfigValue(InjectionPoint ip) {
-
+    public String getStringValue(InjectionPoint ip) {
 
         // Trying with explicit key defined on the field
         final String key = ip.getAnnotated().getAnnotation(Value.class).key();
-        final String defaultValue = ip.getAnnotated().getAnnotation(Value.class).value();
-        
         if (!key.trim().isEmpty()) {
             return resolver.getValue(key);
         }
@@ -68,6 +54,8 @@ public class ValueProducer {
         if (value == null) {
             value = resolver.getValue(ip.getMember().getName());
         }
+        final String defaultValue = ip.getAnnotated().getAnnotation(Value.class).value();
+
         if (value == null && !defaultValue.trim().isEmpty()) {
             return defaultValue;
         }    
@@ -79,45 +67,11 @@ public class ValueProducer {
         return value;
     }
 
-    /**
-    * Produces {@link Double} type of property from {@link String} type.
-    *
-    * <p>
-    * Will throw {@link NumberFormatException} if the value cannot be parsed into a {@link Double}
-    * </p>
-    *
-    * @param ip
-    * @return value of the injected property or null if no value could be found.
-    *
-    * @see ValueProducer#getStringConfigValue(InjectionPoint)
-    */
     @Produces
     @Value
-    public Double getDoubleConfigValue(InjectionPoint ip) {
-        String value = getStringConfigValue(ip);
-
-        return (value != null) ? Double.valueOf(value) : null;
-    }
-
-    /**
-    * Produces {@link Integer} type of property from {@link String} type.
-    *
-    * <p>
-    * Will throw {@link NumberFormatException} if the value cannot be parsed into an {@link Integer}
-    * </p>
-    *
-    * @param ip
-    * @return value of the injected property or null if no value could be found.
-    *
-    * @see ValueProducer#getStringConfigValue(InjectionPoint)
-    */
-    @Produces
-    @Value
-    public Integer getIntegerConfigValue(InjectionPoint ip) {
-        String value = getStringConfigValue(ip);
-
+    public Integer getIntegerValue(InjectionPoint ip) {
+        final String value = getStringValue(ip);
         return (value != null) ? Integer.valueOf(value) : null;
     }
-    
     
 }

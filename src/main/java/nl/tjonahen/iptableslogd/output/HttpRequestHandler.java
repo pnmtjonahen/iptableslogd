@@ -25,7 +25,6 @@ import java.util.List;
 
 import java.util.logging.Logger;
 
-import nl.tjonahen.iptableslogd.jmx.Configuration;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
@@ -41,19 +40,19 @@ public final class HttpRequestHandler implements Runnable {
     private static final String CRLF = "\r\n";
     private static final String SERVERLINE = "Server: iptableslogd httpServer";
     private final OutputStream output;
-    private final Configuration config;
     private final LogEntryCollector logEntryCollector;
     private final LogEntryStatistics logEntryStatistics;
     private final PortNumbers portNumbers;
+    private final boolean useReverseLookup;
 
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
-    public HttpRequestHandler(final Configuration config, 
+    public HttpRequestHandler(final boolean useReverseLookup, 
                               final OutputStream output, 
                               final LogEntryCollector logEntryCollector, 
                               final LogEntryStatistics logEntryStatistics,
                               final PortNumbers portNumbers) {
-        this.config = config;
+        this.useReverseLookup = useReverseLookup;
         this.output = output;
         this.logEntryCollector = logEntryCollector;
         this.logEntryStatistics = logEntryStatistics;
@@ -205,7 +204,7 @@ public final class HttpRequestHandler implements Runnable {
                 })
                 .map((line) -> {
                     data.append("<td>");
-                    if (config.getUseReverseLookup()) {
+                    if (useReverseLookup) {
                         try {
                             final InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
                             data.append(cacheInetAddress.getHostName());
@@ -248,7 +247,7 @@ public final class HttpRequestHandler implements Runnable {
             }
             data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
             data.append("<td>");
-            if (config.getUseReverseLookup()) {
+            if (useReverseLookup) {
                 try {
                     InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
                     data.append(cacheInetAddress.getHostName());

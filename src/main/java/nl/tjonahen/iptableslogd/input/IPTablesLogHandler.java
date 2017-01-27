@@ -21,68 +21,72 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Destroyed;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import nl.tjonahen.iptableslogd.cdi.Value;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
+/**
+ * Auto started or self started CDI bean, Uses CDI events to notify all
+ * observers of new LogEntry events.
+ *
+ * @author Philippe Tjon - A - Hen philippe@tjonahen.nl
+ */
 @ApplicationScoped
-public class IPTablesLogHandler implements Observer {
+public class IPTablesLogHandler {
 
     private static final Logger LOGGER = Logger.getLogger(IPTablesLogHandler.class.getName());
+
+    @Inject
+    @Value("/var/log/ulogd.syslogemu")
+    private String configUlog;
 
     private String ulog;
     private File file;
 
     @Inject
-    private Configuration config;
-
-    @Inject
-    private Event<LogEntry> logEntryEvent;    
+    private Event<LogEntry> logEntryEvent;
 
     private long last; // The last time the file was checked for changes
     private long position; // position within the file
+    private boolean forceStop = false;
 
-
+    /**
+     * This method is called when this applicationScoped bean is initialized It
+     * performs post construct initialization and starts the reader thread.
+     *
+     * @param init -
+     */
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
-        start();
-    }
- 
-    public void destroy(@Observes @Destroyed(ApplicationScoped.class) Object init) {
-    }
-    
-    @PostConstruct
-    public void setup() {
-        config.addObserver(this);
-    }
-
-    public void start() {
         new Thread(this::run).start();
     }
-    
+
+    public void destroy(@Observes @Destroyed(ApplicationScoped.class) Object init) {
+        forceStop = true;
+    }
+
     private void run() {
-        setLogFile(config.getUlog());
+        setLogFile(configUlog);
 
         try {
             last = 0;
             position = 0;
             BufferedReader reader = openReader();
-            while (config.canContinue()) {
+            while (canContinue()) {
                 if (isRotated()) {
                     reader = rotateReader(reader);
                     continue;
                 } else if (resetFile()) {
-                    setLogFile(config.getUlog());
+                    setLogFile(configUlog);
                     reader = openReader();
                 } else {
                     processNewLines(reader);
@@ -95,6 +99,7 @@ public class IPTablesLogHandler implements Observer {
         }
         LOGGER.info(() -> "Stop reading log " + ulog);
     }
+
     private void setLogFile(String ulog) {
         LOGGER.info(() -> "Start reading log " + ulog);
         this.ulog = ulog;
@@ -106,8 +111,9 @@ public class IPTablesLogHandler implements Observer {
     }
 
     private boolean resetFile() {
-        return !ulog.equals(config.getUlog());
+        return !ulog.equals(configUlog);
     }
+
     private void processNewLines(BufferedReader reader) throws IOException {
         if (isMoreDataAvailable()) {
             last = System.currentTimeMillis();
@@ -164,10 +170,12 @@ public class IPTablesLogHandler implements Observer {
     }
 
     private void sleepQuietly() {
-        try {
-            TimeUnit.SECONDS.sleep(10);
-        } catch (InterruptedException e) {
-            // do nothing. suppress exceptions
+        if (canContinue()) {
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                // do nothing. suppress exceptions
+            }
         }
     }
 
@@ -176,6 +184,9 @@ public class IPTablesLogHandler implements Observer {
         while (line != null) {
             LOGGER.log(Level.FINE, "input: {0}", line);
             logEntryEvent.fire(new LogEntry(line));
+            if (!canContinue()) {
+                return file.length();
+            }
             line = reader.readLine();
         }
         return file.length();
@@ -198,11 +209,15 @@ public class IPTablesLogHandler implements Observer {
         }
     }
 
-    @Override
-    public void update(java.util.Observable o, Object arg) {
-        if (!ulog.equals(config.getUlog())) {
-            setLogFile(config.getUlog());
-        }
+    public void update(final @Observes Configuration c) {
+        LOGGER.info(() -> String.format("Update received from %s", c.getClass().getName()));
+
+        configUlog = c.getUlog();
+        forceStop = !c.canContinue();
+    }
+
+    private boolean canContinue() {
+        return !forceStop;
     }
 
 }

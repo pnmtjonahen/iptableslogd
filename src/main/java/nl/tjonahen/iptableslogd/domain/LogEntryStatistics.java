@@ -30,16 +30,14 @@ import javax.inject.Singleton;
 /**
  * LogEntry statistics, counts the number of ports, hosts and protocol.
  *
- * This is shared between the IPTablesLogHandler thread via the
- * LogEntryCollector and the HttpRequestHandler thread. Th IPTablesLogHandler is
- * a single thread that updates the data, the HttpRequestHandler can be on
- * multiple thread reading this data.
+ * Uses the Observer pattern to wait for LogEntry events. 
  *
  * @author Philippe Tjon-A-Hen
  *
  */
 @Singleton
 public final class LogEntryStatistics {
+    private static final int MAX_MAP_SIZE = 10;
     
     @Inject 
     private PortNumbers portNumbers;
@@ -233,11 +231,11 @@ public final class LogEntryStatistics {
     private void sizeMap(Map<String, Counter> map) {
         final CounterComparator comparator = new CounterComparator();
 
-        if (map.keySet().size() > 10) {
+        if (map.keySet().size() > MAX_MAP_SIZE) {
             final List<Entry<String, Counter>> entries = new ArrayList<>(map.entrySet());
             Collections.sort(entries, (Entry<String, Counter> o1, Entry<String, Counter> o2) -> comparator.compare(o1.getValue(), o2.getValue()));
             map.clear();
-            entries.stream().limit(10).forEach((e) -> map.put(e.getKey(), e.getValue()));
+            entries.stream().limit(MAX_MAP_SIZE).forEach((e) -> map.put(e.getKey(), e.getValue()));
         }
 
     }

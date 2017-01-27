@@ -16,8 +16,6 @@
  */
 package nl.tjonahen.iptableslogd.output;
 
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,8 +23,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import nl.tjonahen.iptableslogd.cdi.Value;
 import nl.tjonahen.iptableslogd.jmx.Configuration;
 
 /**
@@ -34,7 +34,7 @@ import nl.tjonahen.iptableslogd.jmx.Configuration;
  * @author Philippe Tjon - A - Hen
  */
 @Singleton
-public class RequestThreadPool implements Observer {
+public class RequestThreadPool {
 
     private static final Logger LOGGER = Logger.getLogger(RequestThreadPool.class.getName());
 
@@ -45,28 +45,21 @@ public class RequestThreadPool implements Observer {
     private int currentPoolSize;
     
     @Inject
-    private Configuration config;
+    @Value("5")
+    private int poolSize;
 
 
     @PostConstruct
     public void setup() {
-        config.addObserver(this);
         setupPool();
     }
     
-
-    @Override
-    public void update(Observable o, Object arg) {
-        if (currentPoolSize != config.getPoolSize()) {
-            setupPool();
-        }
-    }
 
     private void setupPool() {
         if (pool != null) {
             shutdownAndAwaitTermination();
         }
-        this.currentPoolSize = config.getPoolSize();
+        this.currentPoolSize = poolSize;
         LOGGER.info(() ->  String.format("Setup thread pool for %d threads", currentPoolSize));
         pool = Executors.newFixedThreadPool(currentPoolSize);
     }
@@ -96,4 +89,7 @@ public class RequestThreadPool implements Observer {
         return CompletableFuture.runAsync(httpRequestHandler, pool);
     }
 
+    public void update(final @Observes Configuration c) {
+        this.poolSize = c.getPoolSize();
+    }
 }

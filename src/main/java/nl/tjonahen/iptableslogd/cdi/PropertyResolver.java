@@ -21,7 +21,8 @@ import java.util.logging.Logger;
 import javax.inject.Singleton;
 
 /**
- *
+ * Property resolver, currently only uses System.getProperty().
+ * 
  * @author Philippe Tjon - A - Hen
  */
 @Singleton

@@ -26,11 +26,8 @@ import nl.tjonahen.iptableslogd.collection.AggregatingFixedSizeList;
 import nl.tjonahen.iptableslogd.collection.FixedSizeList;
 
 /**
- * LogEntry collector. Collects logentry objects aggragates them calculates
- * statistics etc.
- *
- * This is a shared object. It is shared between the IPTablesLogHandler and
- * HttpRequestHandler threads.
+ * LogEntry collector. Collects LogEntry objects and aggregates them.
+ * Uses the Observer pattern to wait for LogEntry events.
  *
  * @author Philippe Tjon-A-Hen
  *

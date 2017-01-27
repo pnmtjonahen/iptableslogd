@@ -44,7 +44,7 @@ public class HttpRequestHandlerFactory {
     private PortNumbers portNumbers;
 
     public HttpRequestHandler createHandler(OutputStream outputStream) {
-        return new HttpRequestHandler(config, outputStream, logEntryCollector, logEntryStatistics, portNumbers);
+        return new HttpRequestHandler(config.getUseReverseLookup(), outputStream, logEntryCollector, logEntryStatistics, portNumbers);
     }
 
 }

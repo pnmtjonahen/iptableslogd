@@ -25,6 +25,10 @@ import org.jboss.weld.environment.se.Weld;
  */
 public class Application {
 
+    /**
+     * Application entry point. Creates a Weld instance and gets the application bean. to start the user interface http server
+     * @param args no args 
+     */
     public static void main(String[] args) {        
         final Weld weld = new Weld();
         weld.initialize();
