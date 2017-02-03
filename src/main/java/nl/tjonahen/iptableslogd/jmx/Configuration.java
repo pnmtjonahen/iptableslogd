@@ -20,6 +20,7 @@ import java.util.Observable;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.management.InstanceAlreadyExistsException;
@@ -29,17 +30,21 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import nl.tjonahen.iptableslogd.cdi.Value;
 
 /**
  * HttpServerConfiguration MBean.
  *
  */
 @Singleton
-public final class Configuration extends Observable implements ConfigurationMBean {
+public final class Configuration implements ConfigurationMBean {
     private static final Logger LOGGER = Logger.getLogger(Configuration.class.getName());
     
     @Inject
     private MBeanServer platformMBeanServer;
+    
+    @Inject 
+    private Event<Configuration> configurationEvent;
     
     private ObjectName objectName = null;
 
@@ -57,7 +62,6 @@ public final class Configuration extends Observable implements ConfigurationMBea
 
     @PreDestroy
     public void tearDown() {
-        shutdown();
         try {
             platformMBeanServer.unregisterMBean(this.objectName);
         } catch (InstanceNotFoundException | MBeanRegistrationException e) {
@@ -65,17 +69,21 @@ public final class Configuration extends Observable implements ConfigurationMBea
         }
     }
 
-    private int poolSize = 5;
-    private boolean useReverseLookup = true;
+    private boolean useReverseLookup = false;
     private boolean shutdown = false;
     
-    private int port;
+    @Inject
+    @Value("5")
+    private int poolSize;
+   
+    @Inject
+    @Value("/var/log/ulogd.syslogemu")
     private String ulog;
 
     @Override
     public void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
-        this.notifyObservers();
+        notifyAllAboservers();
     }
 
     @Override
@@ -86,6 +94,7 @@ public final class Configuration extends Observable implements ConfigurationMBea
     @Override
     public void shutdown() {
         shutdown = true;
+        notifyAllAboservers();
     }
 
     public boolean canContinue() {
@@ -100,14 +109,7 @@ public final class Configuration extends Observable implements ConfigurationMBea
     @Override
     public void setUseReverseLookup(boolean b) {
         useReverseLookup = b;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
+        notifyAllAboservers();
     }
 
     @Override
@@ -118,8 +120,13 @@ public final class Configuration extends Observable implements ConfigurationMBea
     @Override
     public void setUlog(String ulog) {
         this.ulog = ulog;
-        this.notifyObservers();
+        notifyAllAboservers();
     }
 
+    private void notifyAllAboservers() {
+       
+        LOGGER.info("fire CDI event to notify all observers of configuration change.");
+        configurationEvent.fire(this);
+    }
     
 }

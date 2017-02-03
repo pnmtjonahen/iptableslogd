@@ -18,9 +18,11 @@ package nl.tjonahen.iptableslogd.collection;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Function;
 
 /**
- * List with a fixed size. When the number of elements in the List exceeds the max size the first element is removed.
+ * List with a fixed size. When the number of elements in the List exceeds the
+ * max size the first element is removed.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -30,6 +32,7 @@ public class FixedSizeList<T> extends ArrayList<T> {
 
     private static final long serialVersionUID = -5903792971625280486L;
     private int maxSize;
+    private Function<T, Void> removeCallback;
 
     protected final int getMaxSize() {
         return maxSize;
@@ -43,13 +46,21 @@ public class FixedSizeList<T> extends ArrayList<T> {
     public FixedSizeList(final int size) {
         super();
         maxSize = size;
+        removeCallback = (T t) -> {
+            // do nothing
+            return null;
+        };
+    }
+
+    public void setCallback(final Function<T, Void> removeCallback) {
+        this.removeCallback = removeCallback;
     }
 
     @Override
     public boolean add(final T entry) {
         super.add(entry);
         if (super.size() > maxSize) {
-            super.remove(0);
+            removeCallback.apply(super.remove(0));
         }
         return true;
     }
@@ -58,7 +69,7 @@ public class FixedSizeList<T> extends ArrayList<T> {
     public final void add(final int index, final T element) {
         super.add(index, element);
         while (super.size() > maxSize) {
-            super.remove(0);
+            removeCallback.apply(super.remove(0));
         }
     }
 
@@ -67,7 +78,7 @@ public class FixedSizeList<T> extends ArrayList<T> {
         final boolean b = super.addAll(c);
         if (b) {
             while (super.size() > maxSize) {
-                super.remove(0);
+                removeCallback.apply(super.remove(0));
             }
         }
         return b;
@@ -78,7 +89,7 @@ public class FixedSizeList<T> extends ArrayList<T> {
         final boolean b = super.addAll(index, c);
         if (b) {
             while (super.size() > maxSize) {
-                super.remove(0);
+                removeCallback.apply(super.remove(0));
             }
         }
         return b;

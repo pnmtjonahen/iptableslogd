@@ -20,17 +20,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import java.util.logging.Logger;
 
-import nl.tjonahen.iptableslogd.jmx.Configuration;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 import nl.tjonahen.iptableslogd.domain.LogEntryCollector;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics;
 import nl.tjonahen.iptableslogd.domain.LogEntryStatistics.Counter;
+import nl.tjonahen.iptableslogd.domain.PortNumbers;
 
 /**
  * Request handler, handles a single get.
@@ -41,17 +40,23 @@ public final class HttpRequestHandler implements Runnable {
     private static final String CRLF = "\r\n";
     private static final String SERVERLINE = "Server: iptableslogd httpServer";
     private final OutputStream output;
-    private final Configuration config;
     private final LogEntryCollector logEntryCollector;
     private final LogEntryStatistics logEntryStatistics;
+    private final PortNumbers portNumbers;
+    private final boolean useReverseLookup;
 
     private static final Logger LOGGER = Logger.getLogger(HttpRequestHandler.class.getName());
 
-    public HttpRequestHandler(final Configuration config, final OutputStream output, final LogEntryCollector logEntryCollector, final LogEntryStatistics logEntryStatistics) {
-        this.config = config;
+    public HttpRequestHandler(final boolean useReverseLookup, 
+                              final OutputStream output, 
+                              final LogEntryCollector logEntryCollector, 
+                              final LogEntryStatistics logEntryStatistics,
+                              final PortNumbers portNumbers) {
+        this.useReverseLookup = useReverseLookup;
         this.output = output;
         this.logEntryCollector = logEntryCollector;
         this.logEntryStatistics = logEntryStatistics;
+        this.portNumbers = portNumbers;
     }
 
     @Override
@@ -199,7 +204,7 @@ public final class HttpRequestHandler implements Runnable {
                 })
                 .map((line) -> {
                     data.append("<td>");
-                    if (config.getUseReverseLookup()) {
+                    if (useReverseLookup) {
                         try {
                             final InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
                             data.append(cacheInetAddress.getHostName());
@@ -235,16 +240,16 @@ public final class HttpRequestHandler implements Runnable {
     private String addLogEntry(final LogEntry line, final int count) {
         final StringBuilder data = new StringBuilder("");
         if (line != null) {
-            if (line.isAttack()) {
+            if (isAttack(line.getDestinationPort())) {
                 data.append("<tr>");
             } else {
                 data.append("<tr>");
             }
             data.append("<td nowrap>").append(line.getDateTime()).append("</td>");
             data.append("<td>");
-            if (config.getUseReverseLookup()) {
+            if (useReverseLookup) {
                 try {
-                    InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
+                    final InetAddress cacheInetAddress = InetAddress.getByName(line.getSource());
                     data.append(cacheInetAddress.getHostName());
                 } catch (UnknownHostException e) {
                     data.append(line.getSource());
@@ -257,10 +262,14 @@ public final class HttpRequestHandler implements Runnable {
             }
             data.append("</td>");
             data.append("<td>").append(line.getProtocol()).append("</td>");
-            data.append("<td>").append(line.portDestinationName()).append("</td>");
+            data.append("<td>").append(portNumbers.getDescription(line.getDestinationPort(), line.getProtocol())).append("</td>");
             data.append("</tr>");
         }
         return data.toString();
+    }
+
+    public final boolean isAttack(String destinationPort) {
+        return portNumbers.isKnownAttackPort(destinationPort);
     }
 
 }

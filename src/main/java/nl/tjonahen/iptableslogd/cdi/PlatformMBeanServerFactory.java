@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package nl.tjonahen.iptableslogd.jmx;
+package nl.tjonahen.iptableslogd.cdi;
 
 import java.lang.management.ManagementFactory;
 import javax.enterprise.inject.Produces;
@@ -23,7 +23,8 @@ import javax.inject.Singleton;
 import javax.management.MBeanServer;
 
 /**
- *
+ * Factory for Platform MBeanServer. As CDI is not part of SE there is no need for a default platform mbeanserver within the JDK ?
+ * 
  * @author Philippe Tjon - A - Hen
  */
 @Singleton

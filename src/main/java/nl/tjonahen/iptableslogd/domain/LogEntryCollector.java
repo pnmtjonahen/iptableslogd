@@ -18,6 +18,7 @@ package nl.tjonahen.iptableslogd.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -25,11 +26,8 @@ import nl.tjonahen.iptableslogd.collection.AggregatingFixedSizeList;
 import nl.tjonahen.iptableslogd.collection.FixedSizeList;
 
 /**
- * LogEntry collector. Collects logentry objects aggragates them calculates
- * statistics etc.
- *
- * This is a shared object. It is shared between the IPTablesLogHandler and
- * HttpRequestHandler threads.
+ * LogEntry collector. Collects LogEntry objects and aggregates them.
+ * Uses the Observer pattern to wait for LogEntry events.
  *
  * @author Philippe Tjon-A-Hen
  *
@@ -42,8 +40,6 @@ public final class LogEntryCollector {
     private final AggregatingFixedSizeList<LogEntry> portScanSlots = new AggregatingFixedSizeList<>(5, (t) -> t.getSource());
     private final AggregatingFixedSizeList<LogEntry> error = new AggregatingFixedSizeList<>(10, (t) -> t.getDestination() + t.getDestinationPort());
 
-    @Inject
-    private LogEntryStatistics logEntryStatistics;
     
     @Inject 
     private PortNumbers portNumbers;
@@ -54,10 +50,10 @@ public final class LogEntryCollector {
     /**
      * Adds a new logentry line to the collector.
      *
-     * @param logLine
+     * @param lastEntry
      */
-    public void addLogLine(String logLine) {
-        LogEntry lastEntry = new LogEntry(logLine, portNumbers);
+    public void addLogLine(final @Observes LogEntry lastEntry) {
+        
         if (!detectPortScan(lastEntry)) {
             // if a port scan was detected do not bother with statistics and
             // reporting
@@ -66,8 +62,6 @@ public final class LogEntryCollector {
                 addToAllList(lastEntry);
                 addToErrorList(lastEntry);
             }
-            updateStatistics(lastEntry);
-
         }
     }
     public List<LogEntry> getErrorLogLines() {
@@ -94,7 +88,7 @@ public final class LogEntryCollector {
          * if we see a source more then 2 within a fixed time slot for different
          * destination ports a port scan might be in progress
          */
-        if (entry.canIgnore()) {
+        if (canIgnore(entry.getDestinationPort())) {
             return false;
         }
         portScanSlots.add(entry);
@@ -113,7 +107,7 @@ public final class LogEntryCollector {
     }
 
     private void addToErrorList(LogEntry entry) {
-        if (!entry.canIgnore()) {
+        if (!canIgnore(entry.getDestinationPort())) {
             error.add(entry);
         }
     }
@@ -122,17 +116,12 @@ public final class LogEntryCollector {
         all.add(entry);
     }
 
-    private void updateStatistics(LogEntry entry) {
-        logEntryStatistics.updateGlobal(entry);
-        logEntryStatistics.addHost(entry.getSource());
-        logEntryStatistics.addProtocol(entry.getProtocol());
-        logEntryStatistics.addPort(entry.portDestinationName());
-        logEntryStatistics.addInInterface(entry.getInInterface());
-    }
-
     private boolean isFromDocker(final LogEntry lastEntry) {
         return lastEntry.getInInterface().startsWith("docker");
     }
 
+    private boolean canIgnore(String destinationPort) {
+        return portNumbers.canIgnorePort(destinationPort);
+    }
 
 }
