@@ -27,7 +27,8 @@ import java.util.logging.Logger;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import nl.tjonahen.iptableslogd.cdi.Value;
+import nl.tjonahen.cdi.value.Value;
+
 
 
 import nl.tjonahen.iptableslogd.output.HttpRequestHandlerFactory;

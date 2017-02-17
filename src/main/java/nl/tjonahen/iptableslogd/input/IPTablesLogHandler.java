@@ -30,7 +30,7 @@ import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import nl.tjonahen.iptableslogd.cdi.Value;
+import nl.tjonahen.cdi.value.Value;
 import nl.tjonahen.iptableslogd.domain.LogEntry;
 
 import nl.tjonahen.iptableslogd.jmx.Configuration;

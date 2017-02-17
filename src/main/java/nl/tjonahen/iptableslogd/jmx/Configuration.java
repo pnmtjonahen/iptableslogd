@@ -16,7 +16,6 @@
  */
 package nl.tjonahen.iptableslogd.jmx;
 
-import java.util.Observable;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -30,7 +29,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import nl.tjonahen.iptableslogd.cdi.Value;
+import nl.tjonahen.cdi.value.Value;
 
 /**
  * HttpServerConfiguration MBean.
