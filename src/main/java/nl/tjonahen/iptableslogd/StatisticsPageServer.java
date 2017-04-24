@@ -33,6 +33,7 @@ import nl.tjonahen.cdi.value.Value;
 
 import nl.tjonahen.iptableslogd.output.HttpRequestHandlerFactory;
 import nl.tjonahen.iptableslogd.output.RequestThreadPool;
+import org.jboss.weld.environment.se.events.ContainerInitialized;
 /**
  * StatisticsPage server is a http server that renders a iptables dropped packages statistics view.
  * 
@@ -58,7 +59,7 @@ public final class StatisticsPageServer {
     /**
      * Starts the server socket accept connection loop
      */
-    public void start() {
+    public void start(@Observes ContainerInitialized event) {
         final ServerSocket serverSocket = openServerSocket();
 
         while (canContinue) {
