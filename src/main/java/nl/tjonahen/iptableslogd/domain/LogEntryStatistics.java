@@ -30,16 +30,17 @@ import javax.inject.Singleton;
 /**
  * LogEntry statistics, counts the number of ports, hosts and protocol.
  *
- * Uses the Observer pattern to wait for LogEntry events. 
+ * Uses the Observer pattern to wait for LogEntry events.
  *
  * @author Philippe Tjon-A-Hen
  *
  */
 @Singleton
 public final class LogEntryStatistics {
+
     private static final int MAX_MAP_SIZE = 10;
-    
-    @Inject 
+
+    @Inject
     private PortNumbers portNumbers;
 
     private long start = 0;
@@ -81,9 +82,22 @@ public final class LogEntryStatistics {
     private final Map<String, Counter> ports = new TreeMap<>();
     private final Map<String, Counter> inInterfaces = new TreeMap<>();
 
+    private static int counterCompare(Counter o1, Counter o2) {
+        if (o2.getCount() == o1.getCount()) {
+            if (o2.getLastseen() == o1.getLastseen()) {
+                return 0;
+            } else if (o2.getLastseen() < o1.getLastseen()) {
+                return -1;
+            }
+        } else if (o2.getCount() < o1.getCount()) {
+            return -1;
+        }
+        return 1;
+    }
+
     private List<Counter> getMapAsSortedList(Map<String, Counter> map) {
         synchronized (map) {
-            return map.values().stream().sorted(new CounterComparator()).collect(Collectors.toList());
+            return map.values().stream().sorted(LogEntryStatistics::counterCompare).collect(Collectors.toList());
         }
     }
 
@@ -144,7 +158,7 @@ public final class LogEntryStatistics {
         addPort(portNumbers.getDescription(entry.getDestinationPort(), entry.getProtocol()));
         addInInterface(entry.getInInterface());
     }
-    
+
     /**
      * Add a host name to the host counter.
      *
@@ -229,11 +243,10 @@ public final class LogEntryStatistics {
      *  Resize the map to max 10 elements.
      */
     private void sizeMap(Map<String, Counter> map) {
-        final CounterComparator comparator = new CounterComparator();
 
         if (map.keySet().size() > MAX_MAP_SIZE) {
             final List<Entry<String, Counter>> entries = new ArrayList<>(map.entrySet());
-            Collections.sort(entries, (Entry<String, Counter> o1, Entry<String, Counter> o2) -> comparator.compare(o1.getValue(), o2.getValue()));
+            Collections.sort(entries, (Entry<String, Counter> o1, Entry<String, Counter> o2) -> counterCompare(o1.getValue(), o2.getValue()));
             map.clear();
             entries.stream().limit(MAX_MAP_SIZE).forEach((e) -> map.put(e.getKey(), e.getValue()));
         }

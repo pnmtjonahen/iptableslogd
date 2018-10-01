@@ -58,6 +58,7 @@ public final class StatisticsPageServer {
     
     /**
      * Starts the server socket accept connection loop
+     * @param event ContainerInitialized event.
      */
     public void start(@Observes ContainerInitialized event) {
         final ServerSocket serverSocket = openServerSocket();
